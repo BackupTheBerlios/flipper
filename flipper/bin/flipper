@@ -1,0 +1,7 @@
+#!/bin/bash
+#DIFFHOME=/home/andre/projs/modgen/flipper
+
+cp $1 ~/.flipper/includes/formula.pl
+cd ~/.flipper/includes
+make
+head -n 1 ~/.flipper/includes/formula.h

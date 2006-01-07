@@ -1,0 +1,9 @@
+action(xx(_),r(s(r(s(q))))).
+action(xy(_),p(r(s(r(q))))).
+action(xz(_),r(r(s(r(q))))).
+action(yx(_),r(s(r(q)))).
+action(yy(_),s(r(s(q)))).
+action(yz(_),r(p(s(r(q))))).
+action(zx(_),p(s(r(q)))).
+action(zy(_),s(r(q))).
+action(zz(_),r(r(s(r(s(q)))))).
