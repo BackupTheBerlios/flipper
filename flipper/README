@@ -128,15 +128,15 @@ aea(dom(z) & dom(y) & -f(zy)).
 
 ADVANCED
 
-When installing flipper a c-program that does the actual search for
-a relative consistency proof is compiled and started
-in the following directory.
+When running flipper a c-program that does the actual search for
+a relative consistency proof is assembled and compiled
+using files in the following directory
 
 ~/.flipper/includes
 
 The theory relative to which consistency is proven is stored in the
 form of some tables in a file called "tables.h".
-You may replace that file with one of the following to
+One may replace that file with one of the following to
 try different theories.
 
 tables_do00.h          -  dense order without endpoints
