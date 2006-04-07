@@ -3,22 +3,20 @@ This is the README of flipper.
 Flipper is a program that does randomised local search for
 satisfiability of 3 variable sentences on prenex normal form
 in the pure predicate calculus. It does so by proving satisfiability
-relative to given decidable theories.
+relative to given theories.
 
 Flipper will terminate successfully if the input is satisfiable,
 othewise it will keep on running, usually/always till resources
 are exhausted.
 
-Provided the random generator is on your side, flipper will terminate
+Provided that the random generator is on your side, flipper will terminate
 successfully if the input is satisfiable over some finite structure.
 Besides there are some some inputs not satisfiable
 by any finite structure for which flipper terminates.
 
 The intended use of flipper is as a complement to theorem provers
 and finite model generators in deciding the satisfiability of
-given sentences. Flipper could for instance be usefull in software
-verification as some questions in various temporal logics translate
-quite naturally to a format tractable by flipper.
+given sentences.
 
 
 REQUIREMENTS
@@ -128,13 +126,34 @@ aea(dom(z) & dom(y) & -f(zy)).
 
 
 
+ADVANCED
+
+When installing flipper a c-program that does the actual search for
+a relative consistency proof is compiled and started
+in the following directory.
+
+~/.flipper/includes
+
+The theory relative to which consistency is proven is stored in the
+form of some tables in a file called "tables.h".
+You may replace that file with one of the following to
+try different theories.
+
+tables_do00.h          -  dense order without endpoints
+tables_finite.h	       -  full theory over 2 elemet set (flipper
+                          behaves like a finite model enumerator in this case)
+tables_pres_less.h     -  presburger arithmetic
+tables_succ_less.h     -  natural numbers with successor and less
+tables_do10.h	       -  dense order with one endpoint
+tables_succ.h	       -  natural numbers with successor
+
+
 NOTES
 
-There quite probably still are bugs in flipper.
+There quite possibly still are bugs in flipper.
 If you find some please let me know (rognes
 at berlios.de). Also let me know if you get flipper
 to work for something fun, usefull or otherwise interesting.
-
 
 I hope to get something published on the inner workings of flipper
 soon.
