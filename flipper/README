@@ -79,6 +79,9 @@ Relation(zz)
 where Relation denotes any sequence of 
 letters the first of which is lower case.
 
+WARNING the word 'succ' for relations is reserved for relations
+with the property aea(succ(xy))!
+
 Note that flipper does not recognize equality or function-sybols,
 these have to be defined as in the examples below.
 
