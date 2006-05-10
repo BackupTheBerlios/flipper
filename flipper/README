@@ -37,9 +37,8 @@ make install
 RUNNING
 
 flipper file.fo
-and
+to translate .fo files to the TPTP format do;
 fo2tptp < file.fo
-
 
 where file.fo is a file whose contents has the following form;
 
@@ -78,9 +77,6 @@ Relation(zz)
 
 where Relation denotes any sequence of 
 letters the first of which is lower case.
-
-WARNING the name 'succ' is reserved and
-flipper may show unexpected behaviour if used.
 
 Note that flipper does not recognize equality or function-sybols,
 these have to be defined as in the examples below.
@@ -145,7 +141,6 @@ try different theories.
 tables_do00.h          -  dense order without endpoints
 tables_finite.h	       -  full theory over 2 elemet set (flipper
                           behaves like a finite model enumerator in this case)
-tables_pres_less.h     -  presburger arithmetic
 tables_succ_less.h     -  natural numbers with successor and less
 tables_do10.h	       -  dense order with one endpoint
 tables_succ.h	       -  natural numbers with successor
