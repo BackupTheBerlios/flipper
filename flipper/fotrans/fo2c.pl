@@ -155,47 +155,48 @@ rel_id(R,NextRelId) :-
 	retract(max_rel_id(MaxRelId)),
 	assertz(max_rel_id(NextRelId)).
 
-action(x,r(s(r(s(q))))).
-action(y,s(r(s(q)))).
-action(z,r(r(s(r(s(q)))))).
 
-action(xx,r(s(r(s(q))))).
-action(xy,p(r(s(r(q))))).
-action(xz,r(r(s(r(q))))).
-action(yx,r(s(r(q)))).
-action(yy,s(r(s(q)))).
-action(yz,r(p(s(r(q))))).
-action(zx,p(s(r(q)))).
-action(zy,s(r(q))).
-action(zz,r(r(s(r(s(q)))))).
+action(x,Q) :- action(xxx,Q).
+action(y,Q) :- action(yyy,Q).
+action(z,Q) :- action(zzz,Q).
 
-action(xxx, r(s(r(s(q))))).
-action(xxy, r(s(q))).
-action(xxz, r(s(q))).
-action(xyx, r(s(r(p(q))))).
-action(xyy, p(r(s(r(q))))).
+action(xx,Q) :- action(xxx,Q).
+action(xy,Q) :- action(xyy,Q).
+action(xz,Q) :- action(xzz,Q).
+action(yx,Q) :- action(yxx,Q).
+action(yy,Q) :- action(yyy,Q).
+action(yz,Q) :- action(yzz,Q).
+action(zx,Q) :- action(zxx,Q).
+action(zy,Q) :- action(zyy,Q).
+action(zz,Q) :- action(zzz,Q).
+
 action(xyz, q).
-action(xzx, r(s(r(p(q))))).
-action(xzy, q).
-action(xzz, p(r(s(r(q))))).
-action(yxx, p(r(s(r(q))))).
-action(yxy, r(s(r(p(q))))).
-action(yxz, q).
-action(yyx, r(s(q))).
-action(yyy, r(s(r(s(q))))).
-action(yyz, r(s(q))).
-action(yzx, q).
-action(yzy, r(s(r(p(q))))).
-action(yzz, p(r(s(r(q))))).
-action(zxx, p(r(s(r(q))))).
-action(zxy, q).
-action(zxz, r(s(r(p(q))))).
-action(zyx, q).
-action(zyy, p(r(s(r(q))))).
-action(zyz, r(s(r(p(q))))).
-action(zzx, r(s(q))).
-action(zzy, r(s(q))).
-action(zzz, r(s(r(s(q))))).
+action(yyz, s(q)).
+action(zxy, r(q)).
+action(yxz, p(q)).
+action(xxy, r(s(q))).
+action(xxz, p(s(q))).
+action(zyy, s(r(q))).
+action(yzx, r(r(q))).
+action(zyx, p(r(q))).
+action(xzy, r(p(q))).
+action(yyy, s(r(s(q)))).
+action(zzx, r(r(s(q)))).
+action(yyx, p(r(s(q)))).
+action(zzy, r(p(s(q)))).
+action(yxx, r(s(r(q)))).
+action(zxx, p(s(r(q)))).
+action(yzy, s(r(r(q)))).
+action(xxx, r(s(r(s(q))))).
+action(xzz, r(r(s(r(q))))).
+action(xyy, p(r(s(r(q))))).
+action(yzz, r(p(s(r(q))))).
+action(xyx, r(s(r(r(q))))).
+action(xzx, p(s(r(r(q))))).
+action(zzz, r(r(s(r(s(q)))))).
+action(zxz, r(r(s(r(r(q)))))).
+action(yxy, p(r(s(r(r(q)))))).
+action(zyz, r(p(s(r(r(q)))))).
 
 
 write_id([]).
