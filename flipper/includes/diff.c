@@ -297,56 +297,63 @@ composed *init_c(composed *c, int n_projection, char *descr, composed *sibling) 
      return c;
 }
 
-/* t is such that c(t(x)) = t(x)
- * t := t(dx)
- * c(x+dx) := c(x) + c(t)*c(x) + c(t*(x+dx))
- */
-const composed *c_fast(composed *cx, int n_projection, const composed *dx) {
+/* 
+ * strip := c(dx);     //changes are garanteed to occur within strip
+ * sx_sdx := (x+dx) * strip; // the part of x+dx that lies within strip
+ * oldstrip := cx * strip;    // the part of c(x) that lies within strip
+ * newstrip := c(sx_sdx);
+ * c(x) := c(x) + oldstrip; //erase strip from c(x)
+ * c(x) := c(x) + newstrip
+ * 
+ * c(x+dx) = c(x) + oldstrip   + newstrip
+ * c(x+dx) = c(x) + c(x)*c(dx) + c((x+dx)*c(dx))
+ * now c((c+dx)*c(dx)) is not defined due to nesting of cylindrification
+ * so use t instead, now c(x)*t(dx) translates to c(x)*c(t(dx))
+ * c(x+dx) = c(x) + c(x)*c(t(dx)) + c((x+dx)*t(dx))
+*/
+const composed *c(composed *cx, int n_projection, const composed *dx) {
      const composed *x_xor_dx;
-     composed *ctx_xor_dx;
-     composed *ctcx;
-     composed *t;
+     composed *oldstrip;
+     composed *newstrip;
      score dummy_score;
      
      //if (!intset__member(global__n_current_rel_id,cx->relations)) return global__zero;
      
      x_xor_dx = composed__get_arg0(cx);
+          
+     oldstrip = new__composed_composed(dx);        //oldstrip = dx     
+     composed__t(n_projection,oldstrip);           //oldstrip = t(dx) = strip
+     newstrip = new__composed_composed(oldstrip);  //newstrip = t(dx) = strip
      
+     //finish oldstrip
+     composed__c(n_projection,oldstrip); //to get dimention right
+     composed__and(cx,oldstrip);    //oldstrip done
      
-     t = new__composed_composed(dx);
+     //finish newstrip
+     composed__and(x_xor_dx,newstrip);    //newstrip = strip*(x+dx);
+     composed__c(n_projection,newstrip); // newstrip = c(strip*(x+dx)*strip);
      
-     //composed__t(n_projection,t);
-     composed__c(n_projection,t);
+     //add strips (reuse newstrip)
+     composed__xor(oldstrip,newstrip);
+     composed__minimizing_score(newstrip,&dummy_score); //just to minimize representation
      
-     ctx_xor_dx = new__composed_composed(t);
-     composed__and(x_xor_dx,ctx_xor_dx);
-     composed__c(n_projection,ctx_xor_dx);
-     
-     ctcx = new__composed_composed(t);
-     composed__c(n_projection,ctcx);
-     composed__and(cx,ctcx);
-     
-     //reuse of tcx
-     composed__xor(ctx_xor_dx,ctcx);
-     composed__xor(ctcx,cx);
-     
-     composed__delayed_delete(ctx_xor_dx);
-     composed__delayed_delete(ctcx);
-     composed__delayed_delete(t);
-     
-     composed__minimizing_score(ctcx,&dummy_score);
-     return ctcx;
-}
+     //do changes to cx
+     composed__xor(newstrip,cx);
 
+     composed__delayed_delete(oldstrip);
+     composed__delayed_delete(newstrip);
+          
+     return newstrip;
+}
 
 /*
  *  c(x+dx) = c(x) + c(x) + c(x+dx)
  */
-const composed *c(composed *cx, int n_projection, const composed *dx) {
+const composed *c_slow(composed *cx, int n_projection, const composed *dx) {
      const composed *x_xor_dx;
      composed *ctx_xor_dx;
      composed *tcx;
-          
+     
      //if (!intset__member(global__n_current_rel_id,cx->relations)) return global__zero;
      
      x_xor_dx = composed__get_arg0(cx);
@@ -786,6 +793,8 @@ int iisat(unsigned int n_tries) {
 	  
 	  random_assignment();
 	  //zero_assignment();
+	  //display(0,&set);
+	  
 	  do_score_fast(&set,&scr);
 	  f_best_scr = scr.n_zeros;
 	  best_scr_flips = 0;
