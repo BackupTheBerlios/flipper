@@ -7,7 +7,7 @@
 atomish(aae(_)).
 atomish(aea(_)).
 atomish(aee(_)).
-%atomish(eee(_)).
+atomish(eee(_)).
 atomish(eea(_)).
 atomish(eae(_)).
 atomish(eaa(_)).
@@ -33,14 +33,19 @@ literalize([<=>(A,B)|Gamma],Pos,Neg) :-
 	literalize([(A => B) & (B => A)|Gamma],Pos,Neg).
 literalize([aaa(A)|Gamma],Pos,Neg) :-
 	literalize([A|Gamma],Pos,Neg).
-literalize([eee(A)|Gamma],Pos,Neg) :-
-	literalize(Gamma,[eee(A)|Pos],Neg).
+%literalize([eee(A)|Gamma],Pos,Neg) :-
+%	literalize(Gamma,[eee(A)|Pos],Neg).
 literalize([A|Gamma],Pos,Neg) :-
 	atomish(A),
 	\+(member(A,Neg)),
 	(member(A,Pos) ->
 	literalize(Gamma,Pos,Neg);
 	literalize(Gamma,[A|Pos],Neg)).
+literalize([A|_],_,Neg) :-
+	atomish(A),
+	member(A,Neg),
+	write('inconsistency detected'),nl,
+	halt(1).
 
 literalize([-(-(A))|Gamma],Pos,Neg) :-
 	literalize([A|Gamma],Pos,Neg).
@@ -54,14 +59,19 @@ literalize([-(A <=> B)|Gamma],Pos,Neg) :-
 	literalize([-(B => A) v -(A => B)|Gamma],Pos,Neg).
 literalize([-(aaa(A))|Gamma],Pos,Neg) :-
 	literalize([eee(-(A))|Gamma],Pos,Neg).
-literalize([-(eee(A))|Gamma],Pos,Neg) :-
-	literalize([aaa(-(A))|Gamma],Pos,Neg).
+%literalize([-(eee(A))|Gamma],Pos,Neg) :-
+%	literalize([aaa(-(A))|Gamma],Pos,Neg).
 literalize([-(A)|Gamma],Pos,Neg) :-
 	atomish(A),
 	\+(member(A,Pos)),
 	(member(A,Neg) ->
 	literalize(Gamma,Pos,Neg);
 	literalize(Gamma,Pos,[A|Neg])).
+literalize([-(A)|_],Pos,_) :-
+	atomish(A),
+	member(A,Pos),
+	write('inconsistency detected'),nl,
+	halt(1).
 
 literalize([],Pos,Neg) :-
 	length(Pos,LPos),
@@ -113,7 +123,7 @@ to_formula([C0,C1|Cs],F & Fs) :-
 
 compute_normal_form(NF) :-
 	setof([S,Neg,Pos],sortit([S,Neg,Pos]),List),
-	%write(List),nl,
+	write('//'),write(List),nl,
 	retract(sortit(_)), %cleanup meory
 	to_formula(List,NF).
 
