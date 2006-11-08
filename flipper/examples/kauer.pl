@@ -1,3 +1,4 @@
+%this one is finitely satisfyable
 aae r(xz) &
 aaa (r(xy) => -r(yx)) &
 aae (r(xy) => (r(xz) & r(zy))).

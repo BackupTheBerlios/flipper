@@ -36,6 +36,22 @@ output(aee(A)) :-
 	write('! [X] : ( ? [Y,Z] : ('),nl,
 	output(A),
 	write('))').
+output(eaa(A)) :-
+	write('? [X] : (! [Y,Z] : ('),nl,
+	output(A),
+	write('))').
+output(eae(A)) :-
+	write('? [X] : ! [Y] : ( ? [Z] : ('),nl,
+	output(A),
+	write(')))').
+output(eea(A)) :-
+	write('? [X] : ( ? [Y] : ( ! [Z] : ('),nl,
+	output(A),
+	write(')))').
+output(eee(A)) :-
+	write('? [X] : ( ? [Y,Z] : ('),nl,
+	output(A),
+	write('))').
 output(v(A,B)) :-
 	write('( '),
 	output(A),
