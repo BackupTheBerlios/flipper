@@ -1,6 +1,7 @@
 #define MAX_RELS 256
 #define MAX_REL_NAME 256
-#define MAX_TRIES 4
+#define INITIAL_RANDOM_SEED 0
+#define MAX_TRIES 8
 #define GRANULARITY 0
 #define FLIP_FACTOR 12
 #define SHOW_PROGRESS 1

@@ -349,7 +349,7 @@ const composed *c(composed *cx, int n_projection, const composed *dx) {
 /*
  *  c(x+dx) = c(x) + c(x) + c(x+dx)
  */
-const composed *c_slow(composed *cx, int n_projection, const composed *dx) {
+const composed *c_global(composed *cx, int n_projection, const composed *dx) {
      const composed *x_xor_dx;
      composed *ctx_xor_dx;
      composed *tcx;
@@ -674,6 +674,7 @@ void zero_assignment() {
 
 
 const composed *flip(int n_rel_id,const composed *x) {
+     //composed__c(3,x);
      composed__xor(x,arr_rels[n_rel_id]);
      return evaluate(n_rel_id,x);
 }
@@ -1043,10 +1044,17 @@ void test() {
 
 void initialize_globals() {
      unsigned int i;
+     unsigned int rseed;
      score s_dummy;
      
-     srand(time(0));
-     //srand(1);
+     if (INITIAL_RANDOM_SEED) {
+	  rseed = INITIAL_RANDOM_SEED;
+     } else {
+	  rseed = time(0);
+     }
+     printf("Random seed: %u\n",rseed);
+     srand(rseed);
+     
      intset__global_init();
      
      global__zero = new__composed_zero(3);
@@ -1063,7 +1071,7 @@ void initialize_globals() {
      
      global__n_factor = 1;//simple__n_atoms();
      for (i = 0; i < global__n_granularity; ++i) {
-	  global__n_factor *= 8; //8 is 2^3 3 beeing the dimention
+	  global__n_factor *= 8; //8 is 2^3 3 beeing the dimension
      }
      
      global__n_rels = 0;
