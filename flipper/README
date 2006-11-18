@@ -5,8 +5,9 @@ satisfiability of 3 variable sentences on prenex normal form
 in the pure predicate calculus. It does so by proving satisfiability
 relative to given theories.
 
-Flipper will terminate successfully if the input is satisfiable,
-othewise it will keep on running, usually/always till resources
+Flipper will terminate successfully only if the input is satisfiable.
+If the imput is not found to be satisfiable
+it will keep on running, usually/always till resources
 are exhausted.
 
 Provided that the random generator is on your side, flipper will terminate
@@ -40,7 +41,7 @@ flipper file.fo
 to translate .fo files to the TPTP format do;
 fo2tptp < file.fo
 
-where file.fo is a file whose contents has the following form;
+where file.fo is a file whose content is of the following form;
 
 Sentence.
 
@@ -153,9 +154,7 @@ If you find some please let me know (rognes
 at berlios.de). Also let me know if you get flipper
 to work for something fun, usefull or otherwise interesting.
 
-I hope to get something published on the inner workings of flipper
-soon.
-
-
+For some information on how flipper works see:
+http://www.easychair.org/FLoC-06/DISPROVING-preproceedings.pdf
 
 André Rognes

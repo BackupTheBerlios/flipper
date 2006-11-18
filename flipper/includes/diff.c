@@ -1120,11 +1120,11 @@ int main(int argc, char **argv) {
 	  //tautology();
 	  
 	  ++global__n_granularity;
-	  global__n_factor *= 8;
+	  global__n_factor *= 8; // 8 beeing 2^3
 	  global__n_current_rel_id = global__n_rels;
 	  do_score_all(&set,&dummy);
 	  global__n_max_flips = FLIP_FACTOR * global__n_factor * global__n_rels * simple__n_atoms(3);
-	  n_tries *= 4;
+	  n_tries *= MAX_TRIES_FACTOR;
      }
      
      //isat(MAX_TRIES);
