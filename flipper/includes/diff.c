@@ -101,7 +101,7 @@ composed *init_v(composed *x_or_y,
 }
 
 /* Formula for calculation;
- * (x+dx) | (y+dy) = (x | y) + y*dx + x*dy + (dx | dy)
+ * (x+dx) | (y+dy) = (x | y) + (y+dy)*dx + (x+dx)*dy + (dx | dy)
  * Here
  * |     means or
  * +     means xor
@@ -116,12 +116,12 @@ const composed *v(composed *x_or_y,
      composed *dx_or_dy;
      composed *x_and_dy;
      composed *y_and_dx;
-     const composed *x,*y;
+     const composed *x_xor_dx,*y_xor_dy;
      
      //if (!intset__member(global__n_current_rel_id,x_or_y->relations)) return global__zero;
      
-     x = composed__get_arg0(x_or_y);
-     y = composed__get_arg1(x_or_y);
+     x_xor_dx = composed__get_arg0(x_or_y);
+     y_xor_dy = composed__get_arg1(x_or_y);
           
      
      //start from the right
@@ -130,11 +130,11 @@ const composed *v(composed *x_or_y,
      
      
      x_and_dy = new__composed_composed(dy);
-     composed__and(x,x_and_dy);
+     composed__and(x_xor_dx,x_and_dy);
      
      
      y_and_dx = new__composed_composed(dx);
-     composed__and(y,y_and_dx);
+     composed__and(y_xor_dy,y_and_dx);
      
      
      composed__xor(x_and_dy,dx_or_dy);
@@ -311,7 +311,7 @@ composed *init_c(composed *c, int n_projection, char *descr, composed *sibling) 
  * so use t instead, now c(x)*t(dx) translates to c(x)*c(t(dx))
  * c(x+dx) = c(x) + c(x)*c(t(dx)) + c((x+dx)*t(dx))
 */
-const composed *c(composed *cx, int n_projection, const composed *dx) {
+const composed *c_local(composed *cx, int n_projection, const composed *dx) {
      const composed *x_xor_dx;
      composed *oldstrip;
      composed *newstrip;
@@ -349,7 +349,7 @@ const composed *c(composed *cx, int n_projection, const composed *dx) {
 /*
  *  c(x+dx) = c(x) + c(x) + c(x+dx)
  */
-const composed *c_global(composed *cx, int n_projection, const composed *dx) {
+const composed *c(composed *cx, int n_projection, const composed *dx) {
      const composed *x_xor_dx;
      composed *ctx_xor_dx;
      composed *tcx;
@@ -685,8 +685,8 @@ unsigned int pow2(unsigned int x) {
      return 2*pow2(x - 1);
 }
 
-void show_progress(unsigned int zeros, int best_score_flips, int last_plateu) {
-     if (SHOW_PROGRESS) printf("Best score: %u flips on penultimate plateu: %d total flips %d\n",zeros,best_score_flips,last_plateu);
+void show_progress(unsigned int zeros, int best_score_flips, int last_plataeu) {
+     if (SHOW_PROGRESS) printf("Best score: %u \t flips on penultimate plataeu: %d \t total flips %d\n",zeros,best_score_flips,last_plataeu);
 }
 
 /*indifferent sat variant*/
