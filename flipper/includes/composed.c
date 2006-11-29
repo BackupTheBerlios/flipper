@@ -507,8 +507,7 @@ void composed__c(int n_projection, composed *x) {
 void composed__t0(composed *x) {
      
      if (x->is_simple) {
-	  if(x->n_simple != 0)
-	       simple__one(x->n_dim,&(x->n_simple));
+	  simple__one(x->n_dim,&(x->n_simple));
      } else {
 	  DIFF_FOR_EACH_QUADRANT(x,composed__t0);
 	  DIFF_FOR_EACH_QUADRANT_C0(x,composed__or);
@@ -520,8 +519,7 @@ void composed__t0(composed *x) {
 void composed__t1(composed *x) {
 
      if (x->is_simple) {
-	  if(x->n_simple != 0)
-	       simple__one(x->n_dim,&(x->n_simple));
+	  simple__one(x->n_dim,&(x->n_simple));
      } else {
 	  DIFF_FOR_EACH_QUADRANT(x,composed__t1);
 	  DIFF_FOR_EACH_QUADRANT_C1(x,composed__or);
@@ -533,8 +531,7 @@ void composed__t1(composed *x) {
 void composed__t2(composed *x) {
      
      if (x->is_simple) {
-	  if(x->n_simple != 0)
-	       simple__one(x->n_dim,&(x->n_simple));
+	  simple__one(x->n_dim,&(x->n_simple));
      } else {
 	  DIFF_FOR_EACH_QUADRANT(x,composed__t2);
 	  DIFF_FOR_EACH_QUADRANT_C2(x,composed__or);

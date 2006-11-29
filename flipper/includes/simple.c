@@ -73,7 +73,7 @@ void simple__succ(simple *x) {
 }
 
 void simple__zero(simple *x) {
-   *x = 0;
+   *x = 0ull;
 }
 
 void simple__one(int n_dim, simple *x) {
@@ -152,7 +152,7 @@ void simple__random(simple *x) {
      *x = arr_exp[(int)((tables__n_atoms[3]) * ((double) rand()/RAND_MAX))];
      //if (*x * 2 >= tables__n_max_index[3]) printf("random: %llu\n",*x);
      /*
-     static simple s = 0;
+     static simple s = 0ull;
      *x = s; 
      ++s;
      s = s % (tables__n_max_index3 + 1);
@@ -283,8 +283,8 @@ void simple__describe() {
 
 
 unsigned long long int bitcount(unsigned long long int n) {
-     unsigned long long int ret = 0;
-     while (n != 0) {
+     unsigned long long int ret = 0ull;
+     while (n != 0ull) {
 	  if (n & 1ull) {
 	       ++ret;
 	       n ^= 1ull;
