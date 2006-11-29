@@ -351,7 +351,10 @@ main :-
 	assertz(max_rel_id(-1)),
 	read_term(A,[syntax_error(fail)]),
 	formula(A),
-	sortit(A,Sorted),
+	
+	Sorted = A,
+	%sortit(A,Sorted),
+	
 	fo_2_adequate(Sorted,B),
 	adequate_to_c([],B),!.
 main :-
