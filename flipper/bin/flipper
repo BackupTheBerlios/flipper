@@ -1,6 +1,6 @@
 #!/bin/bash
 #DIFFHOME=/home/andre/projs/modgen/flipper
-
+rm -f ~/.flipper/includes/formula.pl
 cp $1 ~/.flipper/includes/formula.pl
 cd ~/.flipper/includes
 make
