@@ -37,8 +37,8 @@ char arr_rel_names[MAX_RELS][MAX_REL_NAME];
 composed *arr_rels[MAX_RELS];
 int global__n_current_rel_id;
 composed *global__zero;
-composed *global__zero0;  //0-dimentional
-composed *global__one0;   //0-dimentional
+composed *global__zero0;  //0-dimensional
+composed *global__one0;   //0-dimensional
 composed *global__succ;
 
 /* variables for keeping track of where things failed lastly */
@@ -106,7 +106,7 @@ composed *init_v(composed *x_or_y,
  * |     means or
  * +     means xor
  * (x | y) is the permanent value
- * (x | y) + y*dx + x*dy + (dx | dy) is the return value
+ * (x | y) + (y+dy)*dx + (x+dx)*dy + (dx | dy) is the return value
  * dx    is a sparce value
  * dy    is a sparce value
  */
@@ -311,7 +311,7 @@ composed *init_c(composed *c, int n_projection, char *descr, composed *sibling) 
  * so use t instead, now c(x)*t(dx) translates to c(x)*c(t(dx))
  * c(x+dx) = c(x) + c(x)*c(t(dx)) + c((x+dx)*t(dx))
 */
-const composed *c(composed *cx, int n_projection, const composed *dx) {
+const composed *c_local(composed *cx, int n_projection, const composed *dx) {
      const composed *x_xor_dx;
      composed *oldstrip;
      composed *newstrip;
@@ -326,7 +326,7 @@ const composed *c(composed *cx, int n_projection, const composed *dx) {
      newstrip = new__composed_composed(oldstrip);  //newstrip = t(dx) = strip
      
      //finish oldstrip
-     composed__c(n_projection,oldstrip); //to get dimention right
+     composed__c(n_projection,oldstrip); //to get dimension right
      composed__and(cx,oldstrip);    //oldstrip done
      
      //finish newstrip
@@ -349,7 +349,7 @@ const composed *c(composed *cx, int n_projection, const composed *dx) {
 /*
  *  c(x+dx) = c(x) + c(x) + c(x+dx)
  */
-const composed *c_global(composed *cx, int n_projection, const composed *dx) {
+const composed *c(composed *cx, int n_projection, const composed *dx) {
      const composed *x_xor_dx;
      composed *ctx_xor_dx;
      composed *tcx;
@@ -674,7 +674,6 @@ void zero_assignment() {
 
 
 const composed *flip(int n_rel_id,const composed *x) {
-     //composed__c(3,x);
      composed__xor(x,arr_rels[n_rel_id]);
      return evaluate(n_rel_id,x);
 }
@@ -685,8 +684,8 @@ unsigned int pow2(unsigned int x) {
      return 2*pow2(x - 1);
 }
 
-void show_progress(unsigned int zeros, int best_score_flips, int last_plataeu) {
-     if (SHOW_PROGRESS) printf("Best score: %u \t flips on penultimate plataeu: %d \t total flips %d\n",zeros,best_score_flips,last_plataeu);
+void show_progress(unsigned int zeros, int best_score_flips, int last_plateau) {
+     if (SHOW_PROGRESS) printf("Best score: %u \t flips on penultimate plateau: %d \t total flips %d\n",zeros,best_score_flips,last_plateau);
 }
 
 /*indifferent sat variant*/
@@ -794,9 +793,9 @@ int iisat(unsigned int n_tries) {
 	  
 	  random_assignment();
 	  //zero_assignment();
-	  //display(0,&set);
 	  
 	  do_score_fast(&set,&scr);
+	  //display(0,&set);
 	  f_best_scr = scr.n_zeros;
 	  best_scr_flips = 0;
 	  
