@@ -181,9 +181,9 @@ composed *init_axyz(composed *c, char *descr, composed *sibling) {
      
      composed__or(sibling,c);
      composed__not(c); //c is now the negation of sibling
-     if (c->n_dim == 3) composed__c2(c);
-     if (c->n_dim == 2) composed__c1(c);
-     if (c->n_dim == 1) composed__c0(c);
+     if (c->n_dim == 3) composed__c(2,c);
+     if (c->n_dim == 2) composed__c(1,c);
+     if (c->n_dim == 1) composed__c(0,c);
      composed__not(c); //cylindrify and negate
      
      //composed__axyz(c);
@@ -311,7 +311,7 @@ composed *init_c(composed *c, int n_projection, char *descr, composed *sibling) 
  * so use t instead, now c(x)*t(dx) translates to c(x)*c(t(dx))
  * c(x+dx) = c(x) + c(x)*c(t(dx)) + c((x+dx)*t(dx))
 */
-const composed *c_local(composed *cx, int n_projection, const composed *dx) {
+const composed *c(composed *cx, int n_projection, const composed *dx) {
      const composed *x_xor_dx;
      composed *oldstrip;
      composed *newstrip;
@@ -349,7 +349,7 @@ const composed *c_local(composed *cx, int n_projection, const composed *dx) {
 /*
  *  c(x+dx) = c(x) + c(x) + c(x+dx)
  */
-const composed *c(composed *cx, int n_projection, const composed *dx) {
+const composed *c_global(composed *cx, int n_projection, const composed *dx) {
      const composed *x_xor_dx;
      composed *ctx_xor_dx;
      composed *tcx;

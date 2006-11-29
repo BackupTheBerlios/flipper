@@ -30,11 +30,11 @@ struct _composed {
      char *descr;     
      intset *relations;
      composed *arg0;
-     union {
+//     union {
 	  composed *arg1;  //for disjunction only
 	  composed *axyz;  //for universal closure only
 	  int n_rel_id;    //for atomic formulae only
-     };
+//     };
      DIFF_QUADRANT_DECLARATION;
 };
 
