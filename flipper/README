@@ -12,7 +12,7 @@ are exhausted.
 
 Provided that the random generator is on your side, flipper will terminate
 successfully if the input is satisfiable over some finite structure.
-Besides there are some some inputs not satisfiable
+Besides there are some inputs not satisfiable
 by any finite structure for which flipper terminates.
 
 The intended use of flipper is as a complement to theorem provers
@@ -22,6 +22,9 @@ given sentences.
 
 REQUIREMENTS
 
+an operating system somewhat like linux
+
+head
 bash
 make
 gcc
@@ -38,7 +41,7 @@ make install
 RUNNING
 
 flipper file.fo
-to translate .fo files to the TPTP format do;
+%to translate .fo files to the TPTP format do;
 fo2tptp < file.fo
 
 where file.fo is a file whose content is of the following form;
@@ -97,31 +100,31 @@ aaa((lth(xy) & lth(yz)) => lth(xz)).
 
 example 2; an injective endo-function whose image is not entire
 
-aaa(equal(xx)) &
-aaa(equal(xy) => equal(yx)) &
-aaa((equal(xy) & equal(yz)) => equal(xz)) &
-aaa((f(xy) & equal(xz)) => f(zy)) & 	   	%substitution
-aaa((f(xy) & equal(yz)) => f(xz)) & 	       	%substitution
+aaa(eq(xx)) &
+aaa(eq(xy) => eq(yx)) &
+aaa((eq(xy) & eq(yz)) => eq(xz)) &
+aaa((f(xy) & eq(xz)) => f(zy)) & 	   	%substitution
+aaa((f(xy) & eq(yz)) => f(xz)) & 	       	%substitution
 aae(f(xz)) &                        		%f is total
-aaa((f(xy) & f(xz)) => equal(yz)) & 		%f is a function
-aaa((f(xy) & f(zy)) => equal(xz)) & 		%f is injective
+aaa((f(xy) & f(xz)) => eq(yz)) & 		%f is a function
+aaa((f(xy) & f(zy)) => eq(xz)) & 		%f is injective
 aea(-f(zy)). 	       		    		%f's image is not total
 
 
 example 3; the same as the example above except relativized to a
 predicate dom
 
-aaa(equal(xx)) &
-aaa(equal(xy) => equal(yx)) &
-aaa((equal(xy) & equal(yz)) => equal(xz)) &
-aaa((dom(x) & equal(xy)) => dom(y)) &	   		%substitution
-aaa((dom(x) & equal(xy)) => dom(y)) & 		%substitution
+aaa(eq(xx)) &
+aaa(eq(xy) => eq(yx)) &
+aaa((eq(xy) & eq(yz)) => eq(xz)) &
+aaa((dom(x) & eq(xy)) => dom(y)) &	   		%substitution
+aaa((dom(x) & eq(xy)) => dom(y)) & 		%substitution
 aae(dom(z)) &
-aaa((dom(x) & dom(y) & f(xy) & equal(xz)) => f(zy)) & %substitution
-aaa((dom(x) & dom(y) & f(xy) & equal(yz)) => f(xz)) & %substitution
-aae(dom(x) => (f(xz) & dom(z))) &            	      	%f is a function
-aaa((dom(x) & dom(y) & f(xy) & f(xz)) => equal(yz)) & %f is a function
-aaa((dom(x) & dom(y) & f(xy) & f(zy)) => equal(xz)) & %f is injective
+aaa((dom(x) & dom(y) & f(xy) & eq(xz)) => f(zy)) & %substitution
+aaa((dom(x) & dom(y) & f(xy) & eq(yz)) => f(xz)) & %substitution
+aae(dom(x) => (f(xz) & dom(z))) &              %f is total and closedon dom
+aaa((dom(x) & dom(y) & f(xy) & f(xz)) => eq(yz)) & %f is a function
+aaa((dom(x) & dom(y) & f(xy) & f(zy)) => eq(xz)) & %f is injective
 aea(dom(z) & dom(y) & -f(zy)).
 
 
