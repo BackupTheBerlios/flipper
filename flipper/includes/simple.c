@@ -20,8 +20,8 @@
 #include "tables.h"
 
 void score__init(score *x) {
-     x->n_zeros = 0ull;
-     x->n_ones = 0ull;
+     x->n_zeros = 0;
+     x->n_ones = 0;
 }
 
 void score__pluss(const score *x, score *y) {
@@ -37,16 +37,14 @@ void score__not(score *x) {
 }
 
 void score__x_p_y_m_xy_m_xy(int n_dim,unsigned int n_factor,const score *y, const score *xy, score *x) {
-          //x->n_zeros = xy->n_zeros - x->n_ones;  //note mutated reuse of x->n_ones
-          x->n_ones  = x->n_ones + y->n_ones - xy->n_ones - xy->n_ones;
-          x->n_zeros = n_factor * tables__n_atoms[n_dim] - x->n_ones;
+     x->n_ones  = x->n_ones + y->n_ones - xy->n_ones - xy->n_ones;
+     x->n_zeros = n_factor * tables__n_atoms[n_dim] - x->n_ones;
 }
 
 void score__copy(const score *x, score *y) {
-          y->n_zeros = x->n_zeros;
-          y->n_ones = x->n_ones;
+     y->n_zeros = x->n_zeros;
+     y->n_ones = x->n_ones;
 }
-
 
 int simple__is_zero(const simple *x)
 {

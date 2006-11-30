@@ -457,7 +457,7 @@ void display(int tabs, composed *x) {
      printf(x->descr);
      if (*(x->descr) == 'a') {
 	  printf("\tsibling dim: %d",x->arg0->n_dim);
-	  printf("\tzeros: %lld ones: %lld", x->s_score.n_zeros,x->s_score.n_ones);
+	  printf("\tzeros: %ld ones: %ld", x->s_score.n_zeros,x->s_score.n_ones);
      }
      printf("\tdim: %d:", x->n_dim);
      printf("\trelations:");
@@ -502,7 +502,7 @@ void do_score(composed *x, score *s) {
 	  score__copy(&(x->s_score),s);
 	  //composed__balanced_score(global__n_factor,x,s);
 	  //printf("ones: %d, zeros: %d\n",s->n_ones,s->n_zeros);
-	  if (s->n_zeros != 0ull) {
+	  if (s->n_zeros != 0) {
 	       global__last_failed_sentence = x;
 	  }
 	  score__copy(s,&(x->s_score));
@@ -511,7 +511,7 @@ void do_score(composed *x, score *s) {
 	  //composed__score(x,s);
 	  composed__balanced_score(global__n_factor,x,s);
 	  //printf("ones: %d, zeros: %d\n",s->n_ones,s->n_zeros);
-	  if (s->n_zeros != 0ull) {
+	  if (s->n_zeros != 0) {
 	       global__last_failed_sentence = x;
 	  }
 	  score__copy(s,&(x->s_score));
@@ -544,14 +544,14 @@ void do_score_fast(composed *x, score *s) {
      case 'a' :
 	  score__copy(&(x->s_score),s);
 	  //printf("ones: %d, zeros: %d\n",s->n_ones,s->n_zeros);
-	  if (s->n_zeros != 0ull) {
+	  if (s->n_zeros != 0) {
 	       global__last_failed_sentence = x;
 	  }
 	  return;	  
      default :
 	  composed__balanced_score(global__n_factor,x,s);
 	  //printf("ones: %d, zeros: %d\n",s->n_ones,s->n_zeros);
-	  if (s->n_zeros != 0ull) {
+	  if (s->n_zeros != 0) {
 	       global__last_failed_sentence = x;
 	  }
 	  score__copy(s,&(x->s_score));
@@ -782,7 +782,7 @@ int iisat(unsigned int n_tries) {
      unsigned int i,j,k;
      int n_total_flips = 0;
      score scr;
-     unsigned long long int f_scr,f_best_scr;
+     unsigned long int f_scr,f_best_scr;
      int best_scr_flips;
      int n_rel_id;
      composed *x,*y;
