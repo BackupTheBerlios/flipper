@@ -1,7 +1,7 @@
 This is the README of flipper.
 
 Flipper is a program that does randomised local search for
-satisfiability of 3 variable sentences on prenex normal form
+satisfiability of 3 variable prenex sentences
 in the pure predicate calculus. It does so by proving satisfiability
 relative to given theories.
 
