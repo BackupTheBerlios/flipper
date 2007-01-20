@@ -1,3 +1,16 @@
+% One of the parameters in the c-functions beginning with the name init_
+% string describing the connective the first char of which is used as a code
+% in the resulting c-program. In the case of atomic formulae every other char
+% up to the first 'q' is also a code.
+% the codes are as follows:
+% 'a' - universal closure
+% 'e' - existential quantifier
+% 'v' - disjunction
+% '-' - negation
+% 'r' - atomic formula, every other char in the string up to the first 'q'
+%       is a code for variable renaming, these are 's', 'r' and 'p'
+% 's' - a fixed builtin relation.
+
 :- include('common.pl').
 :- include('sortit.pl').
 :- dynamic(rel_id_store/2).
@@ -221,7 +234,7 @@ adequate_to_c(Id,r(R,Vars)) :-
 	
 	write('composed *init'), write_id(Id), write('(int n_rel_id, const composed* q) {'), nl,
 	write('\treturn init_R(&set'), write_id(Id), write(', "'), write(R), write('"'),
-	write(', "r['), write(R), write(','), write(Action), write(']",'),
+	write(', "r['), write(Action), write(','), write(R), write(']",'),
 	write(RelId), write(','), write(Action), write(');'), nl,
 	write('}'),nl,
 	

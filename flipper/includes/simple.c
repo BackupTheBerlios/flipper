@@ -167,7 +167,7 @@ void simple__next(simple *x) {
      static simple s = 0ull;
      *x = s;
      ++s;
-     s = s % (tables__n_max_index[3] + 1);
+     s = s % (tables__n_max_index[3] + 1ull);
      *x ^= s;
 }
 

@@ -82,6 +82,17 @@ composed *s(const composed *q) {
      return ret;
 }
 
+composed *c0(const composed *q) {
+     composed *ret;
+     score s;
+     
+     ret = new__composed_composed(q);
+     composed__c(0,ret);
+     composed__minimizing_score(ret,&s); //for minimalization only
+     composed__delayed_delete(ret);
+     return ret;
+}
+
 composed *init_v(composed *x_or_y,
 		 char *descr,
 	    composed *arg0,
@@ -392,6 +403,10 @@ composed *init_R(composed *r, char *str_name, char *descr,int n_rel_id, const co
 const composed *R(composed *r, int n_rel_id, int n_delta_rel_id, const composed *dx) {
           
      //if (!intset__member(global__n_current_rel_id,&r->s_relations)) return global__zero;
+     /* strangely this tdoes not seem to be faster
+     composed__xor(dx, r);
+	  return dx;
+     */
      
      if (n_rel_id == n_delta_rel_id) {
 	  
@@ -399,7 +414,7 @@ const composed *R(composed *r, int n_rel_id, int n_delta_rel_id, const composed 
 	  return dx;
      } else {
 	  return global__zero;
-     }
+     }           
 }
 
 composed *init_succ(composed *r, char *str_name, char *descr, const composed *x) {
@@ -586,7 +601,7 @@ void do_score_all(composed *x, score *s) {
      }
 }
 
-int pick_a_rel_id(composed *x) {          
+int pick_a_rel_id(const composed *x) {          
      switch(*(x->descr)) {
      case '-' :
 	  return pick_a_rel_id(composed__get_arg0(x));
@@ -606,7 +621,6 @@ int pick_a_rel_id(composed *x) {
      }
 }
 
-
 void cleanup() {
      uninit(&set);
      composed__clear_stack();
@@ -624,8 +638,8 @@ void model() {
      if (DESCRIBE_MODEL) {
 	  printf("model found!\n");
 	  display_assignment();
-     //printf("whole evaluation:\n");
-     //display(0,&set);
+     printf("whole evaluation:\n");
+     display(0,&set);
      }
      
      cleanup();
@@ -777,15 +791,82 @@ int isat(unsigned int n_tries) {
      //display(1,&set);
 }
 
+int pick_random_pair(composed *x) {
+     unsigned int i;
+     composed *y;  //general temporary pointer
+     int n_rel_id;
+     
+     for (i = RADIUS * ((double) rand()/RAND_MAX); i--;) {
+	  y = new__composed_random(global__n_granularity);
+	  composed__xor(y,x);
+	  composed__delete(y);
+     }
+     if (rand() > RAND_MAX/2) {
+	  n_rel_id = global__n_rels * ((double) rand()/RAND_MAX);
+     } else {
+	  n_rel_id = //global__n_last_failed_rel_id;
+	       pick_a_rel_id(global__last_failed_sentence);
+     }
+     return n_rel_id;
+}
+
+void reverse_substitute(const char* descr, composed *x) {
+     const char *p;
+     
+     for (p = descr,p += 2; *p != 'q'; p += 2) {
+	  switch (*p) {
+	  case 'r' :
+	       composed__r(x);
+	       composed__r(x);
+	  case 's' :
+	       composed__c(0,x);
+	  case 'p' :
+	       composed__p(x);
+	  default :
+	       printf("diff.c::reverse_substitute: Error, internal\n");
+	       exit(1);
+	  }
+     }
+}
+
+/* if successful this function picks a relation and the change to be made to that relation 
+   returnes 0 if the choice can be made deterministically */
+int head_not_shallow(int *rel_id, composed *x) {
+     unsigned int i;
+     composed *r,*p;  //general temporary pointer
+     const composed *a;
+     
+     if (*(global__last_failed_sentence->descr) == 'a') {
+	  p = composed__get_arg0(global__last_failed_sentence);
+	  if (*(p->descr) == 'v') {
+	       a = composed__get_arg1(p);
+	       p = composed__get_arg0(p);
+	       if (*(p->descr) == 'r') {
+		    // this sentence is aaa(r(X) v A) so enlarge r by the complement of A
+		    r = p;
+		    composed__zero(x);
+		    composed__or(a,x);
+		    composed__not(x);
+		    composed__and(r,x); //TODO: possibly turn this around for speed
+		    
+		    *rel_id = r->n_rel_id;
+		    reverse_substitute(r->descr,x);
+		    return 0;
+	       }
+	  }
+     }
+     return 1;
+}
+
 /*indifferent sat variant integer types only*/
 int iisat(unsigned int n_tries) {
-     unsigned int i,j,k;
+     unsigned int i,j;
      int n_total_flips = 0;
      score scr;
      unsigned long int f_scr,f_best_scr;
      int best_scr_flips;
      int n_rel_id;
-     composed *x,*y;
+     composed *x;
      
      for (i = 0; i < n_tries; ++i) {
 	  if (SHOW_PROGRESS) printf("Trial: %u, max flips: %u\t",i,global__n_max_flips);
@@ -810,17 +891,11 @@ int iisat(unsigned int n_tries) {
 	  }
 	  
 	  for (j = 0; j < global__n_max_flips; ++j) {	  
+
+	       
 	       x = new__composed_random(global__n_granularity);
-	       for (k = 0; k < 2; ++k) {
-		    y = new__composed_random(global__n_granularity);
-		    composed__xor(y,x);
-		    composed__delete(y);
-	       }
-	       if (rand() > RAND_MAX/2) {
-		    n_rel_id = global__n_rels * ((double) rand()/RAND_MAX);
-	       } else {
-		    n_rel_id = //global__n_last_failed_rel_id;
-			 pick_a_rel_id(global__last_failed_sentence);
+	       if (head_not_shallow(&n_rel_id,x)) {
+		    n_rel_id = pick_random_pair(x);
 	       }
 	       ++n_total_flips;
 	       flip(n_rel_id,x);
