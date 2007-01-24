@@ -600,6 +600,30 @@ void composed__s(composed *x) {
 //assert(composed__sane(x));
 }
 
+//hack hack
+void destructive_or(composed *destroy,composed *x) {
+     if (destroy == x) {
+	  //disjuntion with one self is unnecessary
+     } else {
+	  composed__or(destroy,x);
+	  composed__zero(destroy);
+     }
+}
+
+//quadrants in question are 0 7 4 3
+void composed__s_inv(composed *x) {
+     composed temp;
+     
+     composed__initialize(x->n_dim,&temp);
+     
+     if (x->is_simple) {
+	  simple__s_inv(&(x->n_simple));
+     } else {
+	  DIFF_FOR_EACH_QUADRANT(x,composed__s_inv);
+	  DIFF_FOR_EACH_QUADRANT_S(x,x,destructive_or);	  
+     }
+}
+
 composed *new__composed_random(int n_granularity) {
      composed *ret;
      

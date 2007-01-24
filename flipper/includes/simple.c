@@ -19,6 +19,9 @@
 #include "simple.h"
 #include "tables.h"
 
+
+unsigned long long int arr_s3_inv[sizeof(unsigned long long int)];
+
 void score__init(score *x) {
      x->n_zeros = 0;
      x->n_ones = 0;
@@ -45,6 +48,9 @@ void score__copy(const score *x, score *y) {
      y->n_zeros = x->n_zeros;
      y->n_ones = x->n_ones;
 }
+
+/********************* simple **********************************/
+
 
 int simple__is_zero(const simple *x)
 {
@@ -142,6 +148,12 @@ void simple__r(simple *x) {
 void simple__s(simple *x) {
      disjoin(arr_s3,x);
 }
+
+//inverse of s (also additive)
+void simple__s_inv(simple *x) {
+     disjoin(arr_s3_inv,x);
+}
+
 
 /*
  * note does not return 0
@@ -344,4 +356,21 @@ void simple__test() {
      simple__display(2,0,&x);
      printf(":%lld\n",x);
      printf("\n");
+}
+
+
+void simple__global_init() {
+     int i,j;
+     // initialize the inverse of the s3 operation, namely s3_inv
+     for (i = 0; i < tables__n_atoms[3];++i)
+	  arr_s3_inv[i] = 0ull;
+     for (i = 0; i < tables__n_atoms[3]; ++i) {
+	  if (arr_s3[i] != 0) {
+	       for (j = 0; j < tables__n_atoms[3]; ++j) {
+		    if (evaluate_at(&(arr_s3[i]),j)) {
+			 arr_s3_inv[j] |= arr_exp[i];
+		    }
+	       }
+	  }
+     }
 }

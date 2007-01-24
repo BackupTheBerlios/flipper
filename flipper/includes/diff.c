@@ -32,25 +32,56 @@ double global__f_temprature;     //used for annealing
 /*
  * the maximal index of occuring relations
  * */
+
+typedef struct _rel rel;
+struct _rel {
+     char arr_name[MAX_REL_NAME];
+     unsigned int arity;
+     composed *value;
+};
+
 int global__n_rels;
-char arr_rel_names[MAX_RELS][MAX_REL_NAME];
-composed *arr_rels[MAX_RELS];
+rel arr_struct_rel[MAX_RELS];
+//char arr_rel_names[MAX_RELS][MAX_REL_NAME];
+//composed *arr_rels[MAX_RELS];
 int global__n_current_rel_id;
 composed *global__zero;
 composed *global__zero0;  //0-dimensional
 composed *global__one0;   //0-dimensional
 composed *global__succ;
+composed *global__eq;    //the closest we get to equality
 
 /* variables for keeping track of where things failed lastly */
 composed *global__last_failed_sentence;
 
-void register_relation(char *str_name, int n_rel_id) {
-     if (n_rel_id >= global__n_rels)
-	  global__n_rels = n_rel_id + 1;
-     strcpy(arr_rel_names[n_rel_id],str_name);
-     if (arr_rels[n_rel_id] == 0) {
-	  arr_rels[n_rel_id] = new__composed_zero(3);
+unsigned int count_vars(char *str_descr) {
+  const char *p;
+  unsigned int ret;
+ 
+  ret = 3; //the dimension
+  for (p = str_descr,p += 2; *p != 'q'; p += 2) {
+    if (*p == 's') --ret;
+  }
+     return ret;
+}
+
+void register_relation(char *str_name, char *str_descr,int n_rel_id) {
+     unsigned int n_vars;
+  
+     if (arr_struct_rel[n_rel_id].arr_name[0] == '\0') {
+	  if (n_rel_id >= global__n_rels) {
+	       global__n_rels = n_rel_id + 1;    
+	  }
+	  arr_struct_rel[n_rel_id].arity = count_vars(str_descr);
+	  strcpy(arr_struct_rel[n_rel_id].arr_name,str_name);
+	  arr_struct_rel[n_rel_id].value = new__composed_zero(3);
+     } else {
+	  n_vars = count_vars(str_descr);
+	  if (n_vars > arr_struct_rel[n_rel_id].arity)
+	       arr_struct_rel[n_rel_id].arity = n_vars;
      }
+//     if (arr_struct_rel[n_rel_id].value == 0)
+//	  arr_struct_rel[n_rel_id].value = new__composed_zero(3);
 }
 
 composed *p(const composed *q) {
@@ -387,7 +418,7 @@ const composed *c(composed *cx, int n_projection, const composed *dx) {
 
 /*initial value of relations are 0, so x is not used */
 composed *init_R(composed *r, char *str_name, char *descr,int n_rel_id, const composed *x) {
-     register_relation(str_name,n_rel_id);
+     register_relation(str_name, descr, n_rel_id);
      r->descr = descr;
      composed__initialize(3,r);
      composed__set_arg0(r,0);
@@ -492,8 +523,8 @@ composed *make_zero(composed *q) {
 void display_assignment() {
      int i;
      for (i = 0; i < global__n_rels; ++i) {
-	  printf("%s: ",arr_rel_names[i]);
-	  composed__display(0,arr_rels[i]);
+	  printf("%s: ",arr_struct_rel[i].arr_name);
+	  composed__display(0,arr_struct_rel[i].value);
 	  printf("\n");
      }
 }
@@ -531,7 +562,7 @@ void do_score(composed *x, score *s) {
 	  }
 	  score__copy(s,&(x->s_score));
 	  return;
-     }
+      }
 }
 
 void do_score_fast(composed *x, score *s) {
@@ -638,8 +669,8 @@ void model() {
      if (DESCRIBE_MODEL) {
 	  printf("model found!\n");
 	  display_assignment();
-     printf("whole evaluation:\n");
-     display(0,&set);
+     //printf("whole evaluation:\n");
+     //display(0,&set);
      }
      
      cleanup();
@@ -653,42 +684,147 @@ const composed *evaluate(int n_rel_id, const composed *x) {
 }
 
 
-void random_assignment() {
-     int i;
-     composed *p,*x;
+const composed *flip(int n_rel_id,const composed *x) {
+     composed__xor(x,arr_struct_rel[n_rel_id].value);
+     return evaluate(n_rel_id,x);
+}
+
+void reverse_substitute(const char* descr, composed *x) {
+     const char *p;
+     
+     for (p = descr,p += 2; *p != 'q'; p += 2) {
+	  switch (*p) {
+	  case 'r' :
+	       composed__r(x);
+	       composed__r(x);
+	  case 's' :
+	       composed__s_inv(x);
+	  case 'p' :
+	       composed__p(x);
+	  }
+     }
+}
+
+/* if successful this function picks a relation and the change to be made to that relation 
+   returnes 0 if the choice can be made deterministically */
+
+int head_not_shallow(int *rel_id, composed *x) {
+     unsigned int i;
+     composed *r,*p;  //general temporary pointer
+     const composed *a;
+     
+     if (*(global__last_failed_sentence->descr) == 'a') {
+	  p = composed__get_arg0(global__last_failed_sentence);
+	  if (*(p->descr) == 'r') {
+	       r = p;
+	       //if (count_vars(r->descr) < arr_struct_rel[r->n_rel_id].arity)
+		// return 1;
+	       composed__zero(x);
+	       composed__not(x);
+	       composed__xor(r,x);
+	       *rel_id = r->n_rel_id;
+	       reverse_substitute(r->descr,x);
+	       return 0;
+	  }
+	  if (*(p->descr) == 'v') {
+	       a = composed__get_arg1(p);
+	       p = composed__get_arg0(p);
+	       if (*(p->descr) == 'r') {
+		    // this sentence is aaa(r(X) v A) so enlarge r by the complement of A
+		    r = p;
+		    //if (count_vars(r->descr) < arr_struct_rel[r->n_rel_id].arity)
+			 //return 1;
+		    p = new__composed_composed(r);
+		    
+		    composed__not(p);
+		    composed__zero(x);
+		    composed__not(x);
+		    composed__xor(a,x);
+		    composed__and(p,x); //TODO: possibly turn this around for speed
+		    
+		    composed__delete(p);
+		    
+		    *rel_id = r->n_rel_id;
+		    reverse_substitute(r->descr,x);
+		    return 0;
+	       }
+	  }
+     }
+     return 1;
+}
+
+void deduce(const composed *x) {
+     int n_rel_id,f_scr;
+     composed *dx;
      score s_dummy;
      
-     x = new__composed_composed(&set);
-     
-     for (i = 0; i < global__n_rels; ++i) {
+     if (*(x->descr) == 'v') {
+	  deduce(composed__get_arg0(x));
+	  deduce(composed__get_arg1(x));
+     } else if (*(x->descr) == 'a') {
+	  dx = new__composed_zero(3);
 	  
-	  composed__randomize(x);
-	  composed__xor(x,arr_rels[i]);
-	  evaluate(i,x);
-	  do_score_fast(&set,&s_dummy);
+	  if (head_not_shallow(&n_rel_id,dx)) {
+	       composed__delete(dx);
+	       return;
+	  } else {
+	       flip(n_rel_id,dx);
+	       do_score_fast(&set,&s_dummy);
+	  }
+	  
+	  composed__delete(dx);
+     } else {
+	  deduce(composed__get_arg0(x));
      }
-     composed__delete(x);
+	      
 }
+
 
 /* resets each relation (so it is the empty relation) */
 void zero_assignment() {
-     int i;
-     composed *p,*x;
+     int n_rel_id;
+     composed *p,*dx;
      score s_dummy;
      
-     for (i = 0; i < global__n_rels; ++i) {
-	  x = new__composed_composed(arr_rels[i]);
-	  composed__xor(x,arr_rels[i]);
-	  evaluate(i,x);
+     for (n_rel_id = 0; n_rel_id < global__n_rels; ++n_rel_id) {
+	  dx = new__composed_composed(arr_struct_rel[n_rel_id].value);
+	  composed__xor(dx,arr_struct_rel[n_rel_id].value);
+	  evaluate(n_rel_id,dx);
 	  do_score_fast(&set,&s_dummy);
-	  composed__delete(x);
+	  composed__delete(dx);
      }
 }
 
+void deduced_assignment() {
+     int i;
+     score s;
+     
+     zero_assignment();
+     for (i = 8; i--;) {
+	  printf("\n");display_assignment();
+	  deduce(&set);
 
-const composed *flip(int n_rel_id,const composed *x) {
-     composed__xor(x,arr_rels[n_rel_id]);
-     return evaluate(n_rel_id,x);
+	  do_score_fast(&set,&s);
+	  printf("%u:",s.n_zeros);fflush(0);
+     }
+     composed__collect_delayed();
+}
+
+void random_assignment() {
+     int n_rel_id;
+     composed *p,*dx;
+     score s_dummy;
+     
+     dx = new__composed_composed(&set);
+     
+     for (n_rel_id = 0; n_rel_id < global__n_rels; ++n_rel_id) {
+	  
+	  composed__randomize(dx);
+	  composed__xor(dx,arr_struct_rel[n_rel_id].value);
+	  evaluate(n_rel_id,dx);
+	  do_score_fast(&set,&s_dummy);
+     }
+     composed__delete(dx);
 }
 
 unsigned int pow2(unsigned int x) {
@@ -809,65 +945,7 @@ int pick_random_pair(composed *x) {
      return n_rel_id;
 }
 
-void reverse_substitute(const char* descr, composed *x) {
-     const char *p;
-     
-     for (p = descr,p += 2; *p != 'q'; p += 2) {
-	  switch (*p) {
-	  case 'r' :
-	       composed__r(x);
-	       composed__r(x);
-	       return;
-	  case 's' :
-	       composed__c(0,x);
-	       return;
-	  case 'p' :
-	       composed__p(x);
-	       return;
-	  }
-     }
-}
 
-/* if successful this function picks a relation and the change to be made to that relation 
-   returnes 0 if the choice can be made deterministically */
-int head_not_shallow(int *rel_id, composed *x) {
-     unsigned int i;
-     composed *r,*p;  //general temporary pointer
-     const composed *a;
-     
-     if (*(global__last_failed_sentence->descr) == 'a') {
-	  p = composed__get_arg0(global__last_failed_sentence);
-	  if (*(p->descr) == 'r') {
-	       r = p;
-	       composed__one(x);
-	       composed__xor(r,x);
-	       *rel_id = r->n_rel_id;
-	       reverse_substitute(r->descr,x);
-	       return 0;
-	  }
-	  if (*(p->descr) == 'v') {
-	       a = composed__get_arg1(p);
-	       p = composed__get_arg0(p);
-	       if (*(p->descr) == 'r') {
-		    // this sentence is aaa(r(X) v A) so enlarge r by the complement of A
-		    r = p;
-		    p = new__composed_composed(r);
-		    
-		    composed__not(p);
-		    composed__one(x);
-		    composed__xor(a,x);
-		    composed__and(p,x); //TODO: possibly turn this around for speed
-		    
-		    composed__delete(p);
-		    
-		    *rel_id = r->n_rel_id;
-		    reverse_substitute(r->descr,x);
-		    return 0;
-	       }
-	  }
-     }
-     return 1;
-}
 
 /*indifferent sat variant integer types only*/
 int iisat(unsigned int n_tries) {
@@ -883,6 +961,7 @@ int iisat(unsigned int n_tries) {
 	  if (SHOW_PROGRESS) printf("Trial: %u, max flips: %u\t",i,global__n_max_flips);
 	  fflush(0);
 	  
+	  //deduced_assignment();
 	  //random_assignment();
 	  zero_assignment();
 	  
@@ -910,7 +989,6 @@ int iisat(unsigned int n_tries) {
 	       flip(n_rel_id,x);
 	       
 	       do_score_fast(&set,&scr);
-	       
 	       f_scr = scr.n_zeros;
 	       
 	       if (f_scr <= f_best_scr) {		    
@@ -920,7 +998,6 @@ int iisat(unsigned int n_tries) {
 			 best_scr_flips = j;
 			 j = 0; //restart inner loop
 		    }
-		    
 		    if (scr.n_zeros == 0) {
 			 composed__collect_delayed();
 			 composed__delete(x);
@@ -931,20 +1008,19 @@ int iisat(unsigned int n_tries) {
 			 i = n_tries;
 			 j = global__n_max_flips;
 		    }
-		    
 	       } else {
-		    ++n_total_flips;
-		    flip(n_rel_id,x); //resets the flip we made
-		    do_score_fast(&set,&scr);
-
+		    if (rand() < 0) {  //allow downward motion
+			 f_best_scr = f_scr;
+		    } else {
+			 ++n_total_flips;
+			 flip(n_rel_id,x); //resets the flip we made
+			 do_score_fast(&set,&scr);
+		    }
 	       }
 	       composed__collect_delayed();
 	       composed__delete(x);
-
-	       
 	  }
 	  show_progress(f_best_scr,best_scr_flips,n_total_flips);
-	  
 	  //composed__unsafe_mode();
      }
      return n_total_flips;
@@ -1125,6 +1201,11 @@ void test() {
 }
 */
 
+void initialize_eq() {
+     
+}
+
+
 void initialize_globals() {
      unsigned int i;
      unsigned int rseed;
@@ -1139,10 +1220,12 @@ void initialize_globals() {
      srand(rseed);
      
      intset__global_init();
+     simple__global_init();
      
      global__zero = new__composed_zero(3);
      global__zero0 = new__composed_zero(0);
      global__one0 =  new__composed_zero(0);
+     initialize_eq();
      
      global__succ = new__composed_zero(3);
      composed__succ(global__succ);
@@ -1188,10 +1271,22 @@ int main(int argc, char **argv) {
      //simple__describe();
      printf("\n");
      
-     /*
-     simple__test();
-     exit(0);
-     */
+     printf("\n-----------------------------------------------------\n");
+     composed test;
+     composed *dx;
+     composed__initialize(3,&test);
+     dx = new__composed_random(0);
+     composed__xor(dx,&test);
+     composed__display(0,&test);printf("\n");
+     composed__s_inv(&test);
+     composed__display(0,&test);printf("\n");
+     composed__s(&test);
+     composed__display(0,&test);printf("\n");
+     composed__s_inv(&test);
+     composed__display(0,&test);printf("\n");
+     composed__delete(dx);
+     
+     printf("\n-----------------------------------------------------\n");
      
      n_tries = MAX_TRIES;
      for(i = 0; i >= 0;++i) {
