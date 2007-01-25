@@ -697,10 +697,13 @@ void reverse_substitute(const char* descr, composed *x) {
 	  case 'r' :
 	       composed__r(x);
 	       composed__r(x);
+	       break;
 	  case 's' :
 	       composed__s_inv(x);
+	       break;
 	  case 'p' :
 	       composed__p(x);
+	       break;
 	  }
      }
 }
@@ -754,9 +757,9 @@ int head_not_shallow(int *rel_id, composed *x) {
 }
 
 void deduce(const composed *x) {
-     int n_rel_id,f_scr;
+     int n_rel_id;
      composed *dx;
-     score s_dummy;
+     score scr;
      
      if (*(x->descr) == 'v') {
 	  deduce(composed__get_arg0(x));
@@ -769,9 +772,12 @@ void deduce(const composed *x) {
 	       return;
 	  } else {
 	       flip(n_rel_id,dx);
-	       do_score_fast(&set,&s_dummy);
+	       do_score_fast(&set,&scr);
+	       if (scr.n_zeros == 0) {
+		    composed__delete(dx);
+		    model();
+	       }
 	  }
-	  
 	  composed__delete(dx);
      } else {
 	  deduce(composed__get_arg0(x));
@@ -788,26 +794,10 @@ void zero_assignment() {
      
      for (n_rel_id = 0; n_rel_id < global__n_rels; ++n_rel_id) {
 	  dx = new__composed_composed(arr_struct_rel[n_rel_id].value);
-	  composed__xor(dx,arr_struct_rel[n_rel_id].value);
-	  evaluate(n_rel_id,dx);
+	  flip(n_rel_id,dx);
 	  do_score_fast(&set,&s_dummy);
 	  composed__delete(dx);
      }
-}
-
-void deduced_assignment() {
-     int i;
-     score s;
-     
-     zero_assignment();
-     for (i = 8; i--;) {
-	  printf("\n");display_assignment();
-	  deduce(&set);
-
-	  do_score_fast(&set,&s);
-	  printf("%u:",s.n_zeros);fflush(0);
-     }
-     composed__collect_delayed();
 }
 
 void random_assignment() {
@@ -825,6 +815,17 @@ void random_assignment() {
 	  do_score_fast(&set,&s_dummy);
      }
      composed__delete(dx);
+}
+
+void repair_by_deduction() {
+     int i;
+     score s;
+     
+     for (i = 2; i--;) {
+	  printf("\n");display_assignment();
+	  deduce(&set);
+	  composed__collect_delayed();
+     }
 }
 
 unsigned int pow2(unsigned int x) {
@@ -961,9 +962,10 @@ int iisat(unsigned int n_tries) {
 	  if (SHOW_PROGRESS) printf("Trial: %u, max flips: %u\t",i,global__n_max_flips);
 	  fflush(0);
 	  
-	  //deduced_assignment();
+	  
 	  //random_assignment();
-	  zero_assignment();
+	  random_assignment();
+	  //repair_by_deduction();
 	  
 	  do_score_fast(&set,&scr);
 	  //display(0,&set);
@@ -982,9 +984,9 @@ int iisat(unsigned int n_tries) {
 	  
 	  for (j = 0; j < global__n_max_flips; ++j) {	  
 	       x = new__composed_random(global__n_granularity);
-	       if (head_not_shallow(&n_rel_id,x)) {
+//	       if (head_not_shallow(&n_rel_id,x)) {
 		    n_rel_id = pick_random_pair(x);
-	       }
+//	       }
 	       ++n_total_flips;
 	       flip(n_rel_id,x);
 	       
@@ -1201,11 +1203,6 @@ void test() {
 }
 */
 
-void initialize_eq() {
-     
-}
-
-
 void initialize_globals() {
      unsigned int i;
      unsigned int rseed;
@@ -1225,7 +1222,6 @@ void initialize_globals() {
      global__zero = new__composed_zero(3);
      global__zero0 = new__composed_zero(0);
      global__one0 =  new__composed_zero(0);
-     initialize_eq();
      
      global__succ = new__composed_zero(3);
      composed__succ(global__succ);
@@ -1270,7 +1266,8 @@ int main(int argc, char **argv) {
      
      //simple__describe();
      printf("\n");
-     
+
+     /*
      printf("\n-----------------------------------------------------\n");
      composed test;
      composed *dx;
@@ -1287,6 +1284,7 @@ int main(int argc, char **argv) {
      composed__delete(dx);
      
      printf("\n-----------------------------------------------------\n");
+     */
      
      n_tries = MAX_TRIES;
      for(i = 0; i >= 0;++i) {
