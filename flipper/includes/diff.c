@@ -720,8 +720,6 @@ int head_not_shallow(int *rel_id, composed *x) {
 	  p = composed__get_arg0(global__last_failed_sentence);
 	  if (*(p->descr) == 'r') {
 	       r = p;
-	       //if (count_vars(r->descr) < arr_struct_rel[r->n_rel_id].arity)
-		// return 1;
 	       composed__zero(x);
 	       composed__not(x);
 	       composed__xor(r,x);
@@ -747,6 +745,17 @@ int head_not_shallow(int *rel_id, composed *x) {
 		    
 		    composed__delete(p);
 		    
+		    *rel_id = r->n_rel_id;
+		    reverse_substitute(r->descr,x);
+		    return 0;
+	       }
+	  }
+	  if (*(p->descr) == '-') {
+	       p = composed__get_arg0(p);
+	       if (*(p->descr) == 'r') {
+		    r = p;
+		    composed__zero(x);
+		    composed__xor(r,x);
 		    *rel_id = r->n_rel_id;
 		    reverse_substitute(r->descr,x);
 		    return 0;
@@ -964,10 +973,12 @@ int iisat(unsigned int n_tries) {
 	  
 	  
 	  //random_assignment();
-	  random_assignment();
-	  //repair_by_deduction();
+	  zero_assignment();
 	  
 	  do_score_fast(&set,&scr);
+	  repair_by_deduction();
+	  
+	  
 	  //display(0,&set);
 	  f_best_scr = scr.n_zeros;
 	  best_scr_flips = 0;
