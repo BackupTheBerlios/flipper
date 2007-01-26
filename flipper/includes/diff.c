@@ -432,10 +432,10 @@ static const composed *R(composed *r, int n_rel_id, int n_delta_rel_id, const co
      //if (!intset__member(global__n_current_rel_id,&r->s_relations)) return global__zero;
      
      
-     composed__xor(dx, r);
-     return dx;
+     //composed__xor(dx, r);
+     //return dx;
      
-     /*
+
      if (n_rel_id == n_delta_rel_id) {
 	  
 	  composed__xor(dx, r);
@@ -443,7 +443,7 @@ static const composed *R(composed *r, int n_rel_id, int n_delta_rel_id, const co
      } else {
 	  return global__zero;
      }
-      */
+
 }
 
 composed *init_succ(composed *r, char *str_name, char *descr, const composed *x) {
@@ -785,14 +785,13 @@ int head_not_shallow(int *rel_id, composed *x) {
      return 1;
 }
 
-void deduce(const composed *x) {
+void deduce(const composed *x,score *scr) {
      int n_rel_id;
      composed *dx;
-     score scr;
      
      if (*(x->descr) == 'v') {
-	  deduce(composed__get_arg0(x));
-	  deduce(composed__get_arg1(x));
+	  deduce(composed__get_arg0(x),scr);
+	  deduce(composed__get_arg1(x),scr);
      } else if (*(x->descr) == 'a') {
 	  dx = new__composed_zero(3);
 	  
@@ -801,38 +800,35 @@ void deduce(const composed *x) {
 	       return;
 	  } else {
 	       flip(n_rel_id,dx);
-	       do_score_fast(&set,&scr);
-	       if (scr.n_zeros == 0) {
+	       do_score_fast(&set,scr);
+	       if (scr->n_zeros == 0) {
 		    composed__delete(dx);
 		    model();
 	       }
 	  }
 	  composed__delete(dx);
      } else {
-	  deduce(composed__get_arg0(x));
+	  deduce(composed__get_arg0(x),scr);
      }
-	      
 }
 
 
 /* resets each relation (so it is the empty relation) */
-void zero_assignment() {
+void zero_assignment(score *scr) {
      int n_rel_id;
      composed *p,*dx;
-     score s_dummy;
      
      for (n_rel_id = 0; n_rel_id < global__n_rels; ++n_rel_id) {
 	  dx = new__composed_composed(arr_struct_rel[n_rel_id].value);
 	  flip(n_rel_id,dx);
-	  do_score_fast(&set,&s_dummy);
+	  do_score_fast(&set,scr);
 	  composed__delete(dx);
      }
 }
 
-void random_assignment() {
+void random_assignment(score *scr) {
      int n_rel_id;
      composed *p,*dx;
-     score s_dummy;
      
      dx = new__composed_composed(&set);
      
@@ -840,18 +836,18 @@ void random_assignment() {
 	  
 	  composed__randomize(dx);
 	  flip(n_rel_id,dx);
-	  do_score_fast(&set,&s_dummy);
+	  do_score_fast(&set,scr);
      }
      composed__delete(dx);
 }
 
-void repair_by_deduction() {
+void repair_by_deduction(score *scr) {
      int i;
      score s;
      
      for (i = 2; i--;) {
 	  printf("\n");display_assignment();
-	  deduce(&set);
+	  deduce(&set,scr);
 	  composed__collect_delayed();
      }
 }
@@ -897,16 +893,15 @@ int iisat(unsigned int n_tries) {
      int n_rel_id;
      composed *x;
 
-     score__init(&scr);
      for (i = 0; i < n_tries; ++i) {
 	  if (SHOW_PROGRESS) printf("Trial: %u, max flips: %u\t",i,global__n_max_flips);
 	  fflush(0);
 	  
 	  
-	  random_assignment();
-	  //zero_assignment();
+	  random_assignment(&scr);
+	  //zero_assignment(&scr);
 	  
-	  //repair_by_deduction();
+	  //repair_by_deduction(&scr);
 	  
 	  
 	  //display(0,&set);
@@ -970,179 +965,6 @@ int iisat(unsigned int n_tries) {
      return n_total_flips;
      //display(1,&set);
 }
-
-int annealing(unsigned int n_tries) {
-     unsigned int i,j;
-     int n_total_flips = 0;
-     score scr;
-     double f_scr,f_best_scr;
-     int best_scr_flips;
-     unsigned int best_scr_zeros;
-     int n_rel_id;
-     composed *x;
-     int n_downward;
-     
-     for (i = 0; i < n_tries; ++i) {
-	  if (SHOW_PROGRESS) printf("Trial: %u, max flips: %u\n",i,global__n_max_flips);
-	  fflush(0);
-	  
-	  global__f_temprature = TEMPRATURE;
-	  random_assignment();
-	  do_score_fast(&set,&scr);
-	  f_best_scr = ((double)scr.n_ones)/(scr.n_ones + scr.n_zeros);
-	  best_scr_flips = 0;
-	  best_scr_zeros = scr.n_zeros;
-	  n_downward = 0;
-	  
-	  if (scr.n_zeros == 0) {
-	       if (SHOW_PROGRESS) printf("Best score: %f with zeros: %u found after %u flips. Total flips %d\n",f_best_scr,best_scr_zeros,best_scr_flips,n_total_flips);
-	       model();
-	       //terminate
-	       n_total_flips = 0;
-	       i = n_tries;
-	       j = global__n_max_flips;
-	       return 0;
-	  }
-	  
-	  for (j = 0; j < global__n_max_flips; ++j) {	  
-	       
-	       x = new__composed_random(global__n_granularity);
-	       
-	       if (rand() > RAND_MAX/2) {
-		    n_rel_id = global__n_rels * ((double) rand()/RAND_MAX);
-	       } else {
-		    n_rel_id = pick_a_rel_id(global__last_failed_sentence);
-	       }
-	       ++n_total_flips;
-	       flip(n_rel_id,x);
-	       
-	       do_score_fast(&set,&scr);
-	       
-	       f_scr = ((double) scr.n_ones)/(scr.n_ones + scr.n_zeros);
-	       //printf("score: %e\n",f_scr);
-	       
-	       
-	       if (f_scr >= f_best_scr) {		    
-		    if (f_scr >  f_best_scr) {
-			 f_best_scr = f_scr;
-			 best_scr_flips = j;
-			 best_scr_zeros = scr.n_zeros;
-			 j = 0; //restart inner loop
-		    }
-		    if (scr.n_zeros == 0) {
-			 composed__collect_delayed();
-			 composed__delete(x);
-			 if (SHOW_PROGRESS) printf("Best score: %f with zeros: %u found after %u flips. Total flips %d\n",f_best_scr,best_scr_zeros,best_scr_flips,n_total_flips);
-			 model();
-			      //terminate
-			 i = n_tries;
-			 j = global__n_max_flips;
-		    }
-		    
-	       } else {
-		    if ( exp((f_scr - f_best_scr)/global__f_temprature) <= ((double) rand()/RAND_MAX)) {
-			 
-			 ++n_total_flips;
-			 flip(n_rel_id,x); //resets the flip we made
-			 do_score_fast(&set,&scr);
-		    } else {
-			 //a downward move is allowed here
-			 printf("\r%d",n_downward);
-			 ++n_downward;
-			 f_best_scr = f_scr;
-			 best_scr_flips = 0;
-			 best_scr_zeros = scr.n_zeros;
-		    }
-	       }
-	       composed__collect_delayed();
-	       composed__delete(x);
-	       global__f_temprature *= COOLING_FACTOR;
-	  }
-	  if (SHOW_PROGRESS) printf("Best score: %f with zeros: %u found after %u flips.\n",f_best_scr,best_scr_zeros,best_scr_flips);
-	  printf("downwards %d\n",n_downward);
-     }
-     return n_total_flips;
-     //display(1,&set); 
-}
-
-/* function will run till an
- * assignment is found whose score is not 1.0
- */
-void tautology() {
-     unsigned int i,j;
-     score score;
-     int n_rel_id;
-     composed *x;
-     int n_actual_flips = 0;
-     
-     global__n_max_flips = 10000;
-     
-     for (i = 0; i < MAX_TRIES; ++i) {
-	  printf("Trial: %u\n",i);
-	  
-	  random_assignment();
-	  display_assignment();
-	  
-	  for (j = 0; j < global__n_max_flips; ++j) {	  
-	       
-	       x = new__composed_random(global__n_granularity);
-	       //composed__display(x);printf("\n");
-	       n_rel_id = global__n_rels * ((double) rand()/RAND_MAX);
-	       //printf("random rel_id: %u\n",n_rel_id);
-	       
-	       flip(n_rel_id,x);
-	       do_score_fast(&set,&score);
-	       ++n_actual_flips;
-	       
-	       if (score.n_zeros > 0) {
-		    printf("Input is nontautological\n");
-		    display_assignment();
-		    display(0,&set);
-		    //terminate
-		    i = MAX_TRIES;
-		    j = global__n_max_flips;
-	       }
-	       
-	       
-	       composed__collect_delayed();
-	       composed__delete(x);
-	  }
-     }
-     printf("total flips: %u\n",n_actual_flips);
-     printf("score: %u\n",score.n_zeros);
-     
-}
-
-/*
-void test() {
-     int i,n_rel_id;
-     composed *x,*y;
-     score score;
-     double f_score;
-     
-     for (i = 0; i < 10;) {
-	  random_assignment();
-	  x = new__composed_random(global__n_granularity);                                  
-	  n_rel_id = (global__n_max_rel_id + 1) * ((double) rand()/RAND_MAX);
-	  y = flip(n_rel_id,x);
-	  composed__score(y,&score);
-	  
-	  if (score.n_ones > 0) {
-	       f_score = ((double)score.n_ones)/(score.n_ones + score.n_zeros);
-	       printf("score: %f\n",f_score);
-	       composed__minimizing_score(y,&score);
-	       f_score = ((double)score.n_ones)/(score.n_ones + score.n_zeros);           
-	       printf("minimized score: %f\n",f_score); 
-	       composed__score(y,&score);                                                 
-	       f_score = ((double)score.n_ones)/(score.n_ones + score.n_zeros);           
-	       printf("score: %f\n\n",f_score);
-	       ++i;
-	  }
-	  composed__collect_delayed();
-	  composed__delete(x);
-     }
-}
-*/
 
 void initialize_globals() {
      unsigned int i;
