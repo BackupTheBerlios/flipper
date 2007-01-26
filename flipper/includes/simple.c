@@ -20,7 +20,7 @@
 #include "tables.h"
 
 
-unsigned long long int arr_s3_inv[sizeof(unsigned long long int)];
+unsigned long long int arr_s3_inv[sizeof(arr_s3)];
 
 void score__init(score *x) {
      x->n_zeros = 0;
@@ -364,8 +364,10 @@ void simple__global_init() {
      // initialize the inverse of the s3 operation, namely s3_inv
      for (i = 0; i < tables__n_atoms[3];++i)
 	  arr_s3_inv[i] = 0ull;
+     
      for (i = 0; i < tables__n_atoms[3]; ++i) {
-	  if (arr_s3[i] != 0) {
+	  
+	  if (arr_s3[i] != 0ull) {
 	       for (j = 0; j < tables__n_atoms[3]; ++j) {
 		    if (evaluate_at(&(arr_s3[i]),j)) {
 			 arr_s3_inv[j] |= arr_exp[i];

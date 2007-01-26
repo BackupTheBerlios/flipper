@@ -42,8 +42,6 @@ struct _rel {
 
 int global__n_rels;
 rel arr_struct_rel[MAX_RELS];
-//char arr_rel_names[MAX_RELS][MAX_REL_NAME];
-//composed *arr_rels[MAX_RELS];
 int global__n_current_rel_id;
 composed *global__zero;
 composed *global__zero0;  //0-dimensional
@@ -67,8 +65,8 @@ unsigned int count_vars(char *str_descr) {
 
 void register_relation(char *str_name, char *str_descr,int n_rel_id) {
      unsigned int n_vars;
-  
-     if (arr_struct_rel[n_rel_id].arr_name[0] == '\0') {
+
+     if (arr_struct_rel[n_rel_id].value == 0) {
 	  if (n_rel_id >= global__n_rels) {
 	       global__n_rels = n_rel_id + 1;    
 	  }
@@ -80,8 +78,6 @@ void register_relation(char *str_name, char *str_descr,int n_rel_id) {
 	  if (n_vars > arr_struct_rel[n_rel_id].arity)
 	       arr_struct_rel[n_rel_id].arity = n_vars;
      }
-//     if (arr_struct_rel[n_rel_id].value == 0)
-//	  arr_struct_rel[n_rel_id].value = new__composed_zero(3);
 }
 
 composed *p(const composed *q) {
@@ -431,21 +427,23 @@ composed *init_R(composed *r, char *str_name, char *descr,int n_rel_id, const co
      return r;
 }
 
-const composed *R(composed *r, int n_rel_id, int n_delta_rel_id, const composed *dx) {
+static const composed *R(composed *r, int n_rel_id, int n_delta_rel_id, const composed *dx) {
           
      //if (!intset__member(global__n_current_rel_id,&r->s_relations)) return global__zero;
-     /* strangely this tdoes not seem to be faster
-     composed__xor(dx, r);
-	  return dx;
-     */
      
+     
+     composed__xor(dx, r);
+     return dx;
+     
+     /*
      if (n_rel_id == n_delta_rel_id) {
 	  
 	  composed__xor(dx, r);
 	  return dx;
      } else {
 	  return global__zero;
-     }           
+     }
+      */
 }
 
 composed *init_succ(composed *r, char *str_name, char *descr, const composed *x) {
@@ -503,7 +501,7 @@ void display(int tabs, composed *x) {
      printf(x->descr);
      if (*(x->descr) == 'a') {
 	  printf("\tsibling dim: %d",x->arg0->n_dim);
-	  printf("\tzeros: %ld ones: %ld", x->s_score.n_zeros,x->s_score.n_ones);
+	  printf("\tzeros: %u ones: %u", x->s_score.n_zeros,x->s_score.n_ones);
      }
      printf("\tdim: %d:", x->n_dim);
      printf("\trelations:");
@@ -624,6 +622,11 @@ void do_score_all(composed *x, score *s) {
      case 'a' :
 	  composed__balanced_score(global__n_factor,x->axyz,s);
 	  score__copy(s,&(x->s_score));
+	  if (s->n_zeros != 0) {
+	       global__last_failed_sentence = x;
+	  }
+	  if (global__last_failed_sentence == 0)
+	       global__last_failed_sentence = x;
 	  return;	  
      default :
 	  composed__balanced_score(global__n_factor,x,s);
@@ -669,24 +672,20 @@ void model() {
      if (DESCRIBE_MODEL) {
 	  printf("model found!\n");
 	  display_assignment();
-     //printf("whole evaluation:\n");
-     //display(0,&set);
+     /*
+      printf("whole evaluation:\n");
+      display(0,&set);
+      */
      }
      
      cleanup();
      exit(0);
 }
 
-const composed *evaluate(int n_rel_id, const composed *x) {
-     
-     global__n_current_rel_id = n_rel_id;
-     F(n_rel_id,x);     
-}
-
-
 const composed *flip(int n_rel_id,const composed *x) {
      composed__xor(x,arr_struct_rel[n_rel_id].value);
-     return evaluate(n_rel_id,x);
+     global__n_current_rel_id = n_rel_id;
+     return F(n_rel_id,x);
 }
 
 void reverse_substitute(const char* descr, composed *x) {
@@ -748,6 +747,27 @@ int head_not_shallow(int *rel_id, composed *x) {
 		    *rel_id = r->n_rel_id;
 		    reverse_substitute(r->descr,x);
 		    return 0;
+	       }
+	       if (*(p->descr) == '-') {
+		 p = composed__get_arg0(p);
+		 if (*(p->descr) == 'r') {
+		    // this sentence is aaa(-r(X) v A) so shrink r by the complement of A
+		    r = p;
+		    //if (count_vars(r->descr) < arr_struct_rel[r->n_rel_id].arity)
+			 //return 1;
+		    p = new__composed_composed(a);
+		    
+		    composed__zero(x);
+		    composed__not(x);
+		    composed__xor(a,x);
+		    composed__and(r,x); //TODO: possibly turn this around for speed
+		    
+		    composed__delete(p);
+		    
+		    *rel_id = r->n_rel_id;
+		    reverse_substitute(r->descr,x);
+		    return 0;
+		 }
 	       }
 	  }
 	  if (*(p->descr) == '-') {
@@ -819,8 +839,7 @@ void random_assignment() {
      for (n_rel_id = 0; n_rel_id < global__n_rels; ++n_rel_id) {
 	  
 	  composed__randomize(dx);
-	  composed__xor(dx,arr_struct_rel[n_rel_id].value);
-	  evaluate(n_rel_id,dx);
+	  flip(n_rel_id,dx);
 	  do_score_fast(&set,&s_dummy);
      }
      composed__delete(dx);
@@ -845,95 +864,6 @@ unsigned int pow2(unsigned int x) {
 
 void show_progress(unsigned int zeros, int best_score_flips, int last_plateau) {
      if (SHOW_PROGRESS) printf("Best score: %u \t flips on penultimate plateau: %d \t total flips %d\n",zeros,best_score_flips,last_plateau);
-}
-
-/*indifferent sat variant*/
-int isat(unsigned int n_tries) {
-     unsigned int i,j;
-     int n_total_flips = 0;
-     score scr;
-     double f_scr,f_best_scr;
-     int best_scr_flips;
-     unsigned int best_scr_zeros;
-     int n_rel_id;
-     composed *x;
-     
-     for (i = 0; i < n_tries; ++i) {
-	  if (SHOW_PROGRESS) printf("Trial: %u, max flips: %u\n",i,global__n_max_flips);
-	  fflush(0);
-	  
-	  random_assignment();
-	  //zero_assignment();
-	  do_score_fast(&set,&scr);
-	  f_best_scr = ((double)scr.n_ones)/(scr.n_ones + scr.n_zeros);
-	  best_scr_flips = 0;
-	  best_scr_zeros = scr.n_zeros;
-	  
-	  
-	  if (scr.n_zeros == 0) {
-	       if (SHOW_PROGRESS) printf("Best score: %f with zeros: %u found after %u flips. Total flips %d\n",f_best_scr,best_scr_zeros,best_scr_flips,n_total_flips);
-	       model();
-	       //terminate
-	       n_total_flips = 0;
-	       i = n_tries;
-	       j = global__n_max_flips;
-	       return 0;
-	  }
-	  
-	  for (j = 0; j < global__n_max_flips; ++j) {	  
-	       x = new__composed_random(global__n_granularity);
-	       
-	       if (rand() > RAND_MAX/2) {
-		    n_rel_id = global__n_rels * ((double) rand()/RAND_MAX);
-	       } else {
-		    n_rel_id = //global__n_last_failed_rel_id;
-			 pick_a_rel_id(global__last_failed_sentence);
-	       }
-	       ++n_total_flips;
-	       flip(n_rel_id,x);
-	       
-	       do_score_fast(&set,&scr);
-	       
-	       f_scr = ((double) scr.n_ones)/(scr.n_ones + scr.n_zeros);
-	       //printf("score: %e\n",f_scr);
-	       
-	       
-	       if (f_scr >= f_best_scr) {		    
-		    
-		    if (f_scr >  f_best_scr) {
-			 f_best_scr = f_scr;
-			 best_scr_flips = j;
-			 best_scr_zeros = scr.n_zeros;
-			 j = 0; //restart inner loop
-			 //printf("inprovement, zeroes: %d\n",scr.n_zeros);
-		    }
-		    
-		    if (scr.n_zeros == 0) {
-			 composed__collect_delayed();
-			 composed__delete(x);
-			 if (SHOW_PROGRESS) printf("Best score: %f with zeros: %u found after %u flips. Total flips %d\n",f_best_scr,best_scr_zeros,best_scr_flips,n_total_flips);
-			 model();
-			      //terminate
-			 i = n_tries;
-			 j = global__n_max_flips;
-		    }
-		    
-	       } else {
-		    ++n_total_flips;
-		    flip(n_rel_id,x); //resets the flip we made
-		    do_score_fast(&set,&scr);
-
-	       }
-	       composed__collect_delayed();
-	       composed__delete(x);
-	       
-	  }
-	  if (SHOW_PROGRESS) printf("Best score: %f with zeros: %u found after %u flips. Total flips %d\n",f_best_scr,best_scr_zeros,best_scr_flips,n_total_flips);
-	  
-	  //composed__unsafe_mode();
-     }
-     return n_total_flips;
-     //display(1,&set);
 }
 
 int pick_random_pair(composed *x) {
@@ -962,29 +892,29 @@ int iisat(unsigned int n_tries) {
      unsigned int i,j;
      int n_total_flips = 0;
      score scr;
-     unsigned long int f_scr,f_best_scr;
+     unsigned long int n_scr,n_best_scr;
      int best_scr_flips;
      int n_rel_id;
      composed *x;
-     
+
+     score__init(&scr);
      for (i = 0; i < n_tries; ++i) {
 	  if (SHOW_PROGRESS) printf("Trial: %u, max flips: %u\t",i,global__n_max_flips);
 	  fflush(0);
 	  
 	  
-	  //random_assignment();
-	  zero_assignment();
+	  random_assignment();
+	  //zero_assignment();
 	  
-	  do_score_fast(&set,&scr);
-	  repair_by_deduction();
+	  //repair_by_deduction();
 	  
 	  
 	  //display(0,&set);
-	  f_best_scr = scr.n_zeros;
+	  n_best_scr = scr.n_zeros;
 	  best_scr_flips = 0;
 	  
 	  if (scr.n_zeros == 0) {
-	       show_progress(f_best_scr,best_scr_flips,n_total_flips);
+	       show_progress(n_best_scr,best_scr_flips,n_total_flips);
 	       model();
 	       //terminate
 	       n_total_flips = 0;
@@ -999,15 +929,16 @@ int iisat(unsigned int n_tries) {
 		    n_rel_id = pick_random_pair(x);
 //	       }
 	       ++n_total_flips;
+
 	       flip(n_rel_id,x);
-	       
 	       do_score_fast(&set,&scr);
-	       f_scr = scr.n_zeros;
+
+	       n_scr = scr.n_zeros;
 	       
-	       if (f_scr <= f_best_scr) {		    
+	       if (n_scr <= n_best_scr) {		    
 		    
-		    if (f_scr <  f_best_scr) {
-			 f_best_scr = f_scr;
+		    if (n_scr <  n_best_scr) {
+			 n_best_scr = n_scr;
 			 best_scr_flips = j;
 			 j = 0; //restart inner loop
 		    }
@@ -1015,7 +946,7 @@ int iisat(unsigned int n_tries) {
 			 composed__collect_delayed();
 			 composed__delete(x);
 
-			 show_progress(f_best_scr,best_scr_flips,n_total_flips);
+			 show_progress(n_best_scr,best_scr_flips,n_total_flips);
 			 model();
 			      //terminate
 			 i = n_tries;
@@ -1023,7 +954,7 @@ int iisat(unsigned int n_tries) {
 		    }
 	       } else {
 		    if (rand() < 0) {  //allow downward motion
-			 f_best_scr = f_scr;
+			 n_best_scr = n_scr;
 		    } else {
 			 ++n_total_flips;
 			 flip(n_rel_id,x); //resets the flip we made
@@ -1033,7 +964,7 @@ int iisat(unsigned int n_tries) {
 	       composed__collect_delayed();
 	       composed__delete(x);
 	  }
-	  show_progress(f_best_scr,best_scr_flips,n_total_flips);
+	  show_progress(n_best_scr,best_scr_flips,n_total_flips);
 	  //composed__unsafe_mode();
      }
      return n_total_flips;
@@ -1160,9 +1091,8 @@ void tautology() {
 	       //printf("random rel_id: %u\n",n_rel_id);
 	       
 	       flip(n_rel_id,x);
-	       ++n_actual_flips;
-	       
 	       do_score_fast(&set,&score);
+	       ++n_actual_flips;
 	       
 	       if (score.n_zeros > 0) {
 		    printf("Input is nontautological\n");
@@ -1249,6 +1179,7 @@ void initialize_globals() {
      
      global__n_rels = 0;
      init(0,global__succ); //registers all relations so 0 is just a dummy
+     global__last_failed_sentence = 0;
      do_score_all(&set,&s_dummy);
      if (!intset__is_within_bounds(global__n_rels)) {
 	  printf("Error: number of relations is to high: up INTSET_UNINTS in intset.h\n");
