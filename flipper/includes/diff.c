@@ -13,10 +13,7 @@
   *   (at your option) any later version.                                   *
   *                                                                         *
   ***************************************************************************/
-#include <stdlib.h>
-#include <math.h>
-#include <inttypes.h>
-#include "parameters.h"
+#include "headers.h"
 #include "intset.h"
 #include "defines.h"
 #include "simple.h"
@@ -898,10 +895,10 @@ int iisat(unsigned int n_tries) {
 	  fflush(0);
 	  
 	  
-	  random_assignment(&scr);
-	  //zero_assignment(&scr);
+	  //random_assignment(&scr);
+	  zero_assignment(&scr);
 	  
-	  //repair_by_deduction(&scr);
+	  repair_by_deduction(&scr);
 	  
 	  
 	  //display(0,&set);

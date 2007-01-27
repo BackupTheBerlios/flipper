@@ -14,9 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include <stdlib.h>
-#include <inttypes.h>
-#include "parameters.h"
+#include "headers.h"
 #include "intset.h"
 //#include <assert.h>
 #include "defines.h"
