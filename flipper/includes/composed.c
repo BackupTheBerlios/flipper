@@ -16,7 +16,6 @@
 
 #include "headers.h"
 #include "intset.h"
-//#include <assert.h>
 #include "defines.h"
 #include "simple.h"
 #include "composed.h"

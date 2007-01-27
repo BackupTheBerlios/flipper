@@ -18,4 +18,4 @@
 #include <string.h>
 #include <time.h>
 #include <inttypes.h>
-#include "parameters.h"
+#include "params.h"

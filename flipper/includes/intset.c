@@ -14,8 +14,7 @@
   *                                                                         *
   ***************************************************************************/
      
-#include <inttypes.h>
-#include "parameters.h"
+#include "headers.h"
 #include "intset.h"
 
 
@@ -88,7 +87,7 @@ void intset__describe(const intset *x) {
      
      for (i = 0; i < 64; ++i) {
 	  if (intset__member(i,x)) {
-	       printf(" %d",i);
+	       printf(" %u",i);
 	  }
      }
 }
