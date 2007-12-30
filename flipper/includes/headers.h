@@ -17,5 +17,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <inttypes.h>
+#include <limits.h>
+#define DIFF_CONST const
 #include "params.h"
+#define ULONG_BIT 32
+

@@ -13,20 +13,20 @@
   *   (at your option) any later version.                                   *
   *                                                                         *
   ***************************************************************************/
-     
-#define INTSET_UNITS ((MAX_RELS+1)/64)
+
+#define INTSET_UNITS ((MAX_RELS+1)/ULONG_BIT)
 
 typedef struct _intset intset;
 
 struct _intset {
-     uint64_t x[INTSET_UNITS];
+     unsigned long int x[INTSET_UNITS];
 };
 
 void intset__global_init();
-uint64_t intset__pow2(unsigned int x);
+unsigned long int intset__pow2(unsigned int x);
 void intset__init(intset *x);
-int intset__member(unsigned int a, const intset *x);
+int intset__member(unsigned int a, DIFF_CONST intset *x);
 void intset__insert(unsigned int a, intset *x);
-void intset__or(const intset *x, intset *y);
-void intset__describe(const intset *x);
+void intset__or(DIFF_CONST intset *x, intset *y);
+void intset__describe(DIFF_CONST intset *x);
 int intset__is_within_bounds(unsigned int x);

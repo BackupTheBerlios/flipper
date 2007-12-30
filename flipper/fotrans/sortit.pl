@@ -88,7 +88,7 @@ pos_disjoin([L0,L1|Ls], L0 v D) :-
 	pos_disjoin([L1|Ls],D).
 
 neg_disjoin([L],-L).
-neg_disjoin([L0,L1|Ls], -(L0) v D) :-
+neg_disjoin([L0,L1|Ls], D v -(L0)) :-
 	neg_disjoin([L1|Ls],D).
 
 clause_to_formula([_,[],[]]) :-
@@ -109,10 +109,12 @@ clause_to_formula([_,Neg,[]],A) :-
 		A = aaa(Disj)
 	) ; (
 		[A] = Neg)).
-clause_to_formula([_,Neg,Pos],aaa(NDisj v PDisj)) :-
-	Pos \= [],
+clause_to_formula([_,Neg,[PLit0]],aaa(PLit0 v NDisj)) :-
 	Neg \= [],
-	pos_disjoin(Pos,PDisj),
+	neg_disjoin(Neg,NDisj).
+clause_to_formula([_,Neg,[PLit0,PLit1|Pos]],aaa(PLit0 v (PDisj v NDisj))) :-
+	Neg \= [],
+	pos_disjoin([PLit1|Pos],PDisj),
 	neg_disjoin(Neg,NDisj).
 
 to_formula([Clause],Formula) :-
@@ -123,7 +125,7 @@ to_formula([C0,C1|Cs],F & Fs) :-
 
 compute_normal_form(NF) :-
 	setof([S,Neg,Pos],sortit([S,Neg,Pos]),List),
-	write('//'),write(List),nl,
+	%write('//'),write(List),nl,
 	retract(sortit(_)), %cleanup meory
 	to_formula(List,NF).
 
@@ -138,8 +140,8 @@ sortit_loop(_).
 
 sortit(Formula,NF) :-
 	sortit_loop(Formula),
-	compute_normal_form(NF).
-
+	compute_normal_form(NF),
+	write('/* '), write(NF), write('*/'),nl.
 
 %sortit_main :-
 %	read(Formula),

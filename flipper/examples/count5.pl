@@ -1,4 +1,3 @@
-%for testing
 eee one(x) &
 eee two(x) &
 aaa -(one(x) & two(x)) &

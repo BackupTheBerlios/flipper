@@ -1,9 +1,8 @@
 This is the README of flipper.
 
 Flipper is a program that does randomised local search for
-satisfiability of 3 variable prenex sentences
-in the pure predicate calculus. It does so by proving satisfiability
-relative to given theories.
+satisfying interpretaions for conjunctions of purely relational
+3 variable prenex sentences.
 
 Flipper will terminate successfully only if the input is satisfiable.
 If the imput is not found to be satisfiable
@@ -11,13 +10,13 @@ it will keep on running, usually/always till resources
 are exhausted.
 
 Provided that the random generator is on your side, flipper will terminate
-successfully if the input is satisfiable over some finite structure.
+successfully if the input is satisfiable over some finite set.
 Besides there are some inputs not satisfiable
-by any finite structure for which flipper terminates.
+over any finite set for which flipper terminates.
 
 The intended use of flipper is as a complement to theorem provers
-and finite model generators in deciding the satisfiability of
-given sentences.
+and finite model generators in attempts at deciding whether
+given sentences are satisfyable.
 
 
 REQUIREMENTS
@@ -78,6 +77,10 @@ Relation(yz)
 Relation(zx)
 Relation(zy)
 Relation(zz)
+Relation(xyz) 
+.
+.
+.
 
 where Relation denotes any sequence of 
 letters the first of which is lower case.
@@ -154,7 +157,7 @@ NOTES
 
 There quite possibly still are bugs in flipper.
 If you find some please let me know (rognes
-at users.berlios.de). Also let me know if you get flipper
+at berlios.de). Also let me know if you get flipper
 to work for something fun, usefull or otherwise interesting.
 
 For some information on how flipper works see:

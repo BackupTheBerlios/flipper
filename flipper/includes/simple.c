@@ -13,25 +13,125 @@
   *   (at your option) any later version.                                   *
   *                                                                         *
   ***************************************************************************/
-     
+
 #include "headers.h"
 #include "defines.h"
 #include "simple.h"
 #include "tables.h"
 
 
-unsigned long long int arr_s3_inv[sizeof(arr_s3)];
+
+static void mpn__zero (mp_limb_t x[]) {
+     unsigned int i;
+   
+     for (i = SIMPLE_LIMBS; i--;) {
+	  x[i] = 0;
+     }
+}
+
+static void mpn__binary_one (mp_limb_t x[]) {
+          mpn__zero(x);
+          ++x[0];
+}
+
+static void mpn__double(mp_limb_t x[]) {
+     unsigned int i, carry0, carry1;
+     
+     carry0 = 0;
+     for (i = 0; i < SIMPLE_LIMBS; ++i) {
+	  carry1 = x[i] >> (ULONG_BIT - 1);
+	  x[i] <<= 1;
+	  x[i] |= carry0;
+	  carry0 = carry1;
+     }
+}
+
+static void mpn__copy(DIFF_CONST mp_limb_t from[],mp_limb_t to[]) {
+     unsigned int i;
+     for (i = SIMPLE_LIMBS; i--;) {
+	  to[i] = from[i];
+     }
+}
+
+static void mpn__decr(DIFF_CONST mp_limb_t from[], mp_limb_t to[]) {
+     unsigned int i,carry;
+     
+     carry = 1;
+     for (i = 0; i < SIMPLE_LIMBS; ++i) {
+	  to[i] = from[i] - carry;
+	  if (to[i] != ULONG_MAX) carry = 0;
+     }
+}
+
+static void mpn__or(DIFF_CONST mp_limb_t from[],mp_limb_t to[]) {
+     unsigned int i;
+     
+     for (i = SIMPLE_LIMBS; i--;) {
+	  to[i] |= from[i];
+     }
+}
+
+static void mpn__xor(DIFF_CONST mp_limb_t from[],mp_limb_t to[]) {
+     unsigned int i;
+     
+     for (i = SIMPLE_LIMBS; i--;) {
+	  to[i] ^= from[i];
+     }
+}
+
+static void mpn__and(DIFF_CONST mp_limb_t from[],mp_limb_t to[]) {
+     int i;
+          
+     for (i = SIMPLE_LIMBS; i--;) {
+	  to[i] &= from[i];
+     }
+}
+
+int mpn__is_zero(DIFF_CONST mp_limb_t x[]) {
+     unsigned int i;
+     mp_limb_t acc;
+     
+     acc = x[0];
+     for (i = SIMPLE_LIMBS; i--;) {
+	  acc |= x[i];
+     }
+     return !acc;
+}
+
+static unsigned int mpn__popcount(DIFF_CONST mp_limb_t x[]) {
+     unsigned int ret = 0;
+     mp_limb_t n;
+     unsigned int i, carry;
+     
+     for (i = SIMPLE_LIMBS;i--;) {
+	  n = x[i];
+	  while (n != 0) {
+	       carry = n & 1;
+	       ret += carry;
+	       n >>= 1;
+	  }
+     }
+     return ret;
+}
+
+
+
+
+
+mp_limb_t arr_s3_inv[sizeof(arr_s3)][SIMPLE_LIMBS]; /*TODO this is way oversized*/
+
+/*************************** score ******************************************/
 
 void score__init(score *x) {
      x->n_zeros = 0;
      x->n_ones = 0;
 }
-
-void score__pluss(const score *x, score *y) {
+  
+void score__pluss(DIFF_CONST score *x, score *y) {
      y->n_zeros += x->n_zeros;
      y->n_ones += x->n_ones;
 }
-
+  
 /*use of the xor swap trick*/
 void score__not(score *x) {
      x->n_zeros ^= x->n_ones;
@@ -39,84 +139,97 @@ void score__not(score *x) {
      x->n_zeros ^= x->n_ones;
 }
 
-void score__x_p_y_m_xy_m_xy(int n_dim,unsigned int n_factor,const score *y, const score *xy, score *x) {
+void score__x_p_y_m_xy_m_xy(int n_dim,unsigned int n_factor,DIFF_CONST score *y, DIFF_CONST score *xy, score *x) {
      x->n_ones  = x->n_ones + y->n_ones - xy->n_ones - xy->n_ones;
      x->n_zeros = n_factor * tables__n_atoms[n_dim] - x->n_ones;
 }
 
-void score__copy(const score *x, score *y) {
+void score__copy(DIFF_CONST score *x, score *y) {
      y->n_zeros = x->n_zeros;
      y->n_ones = x->n_ones;
 }
 
 /********************* simple **********************************/
 
-
-int simple__is_zero(const simple *x)
+int simple__is_zero(DIFF_CONST simple *x)
 {
-   return (*x == 0ull);
+      return mpn__is_zero(x->arr);
 }
 
-int simple__is_one(int n_dim,const simple *x)
+int simple__is_one(int n_dim,DIFF_CONST simple *x)
 {
-   return (*x == tables__n_max_index[n_dim]);
+     int i;
+     for (i = 0; i < SIMPLE_LIMBS; ++i) {
+	  if (x->arr[i] != tables__n_max_index[n_dim][i]) return 0;
+     }
+     return 1;
 }
-
+  /*
 int simple__arr_max(int n_dim) {
      return tables__n_max_index[n_dim];
 }
+  */
 
 /* operations on 0 (the minimal boolean algebra)*/
-
 void simple__point(simple *x) {
-     *x = const_rel2;
+     mpn__copy(const_rel2,x->arr);
+  
 }
 
-void simple__succ(simple *x) {
-     *x = const_rel1;
+void simple__wqo(simple *x) {
+  
+     mpn__copy(const_rel1,x->arr);
 }
 
 void simple__zero(simple *x) {
-   *x = 0ull;
+     mpn__zero(x->arr);
 }
 
 void simple__one(int n_dim, simple *x) {
-   *x = tables__n_max_index[n_dim];
+  int i;
+  for (i = 0; i < SIMPLE_LIMBS;++i) {
+    
+      mpn__copy(tables__n_max_index[n_dim],x->arr);
+  }
 }
 
-void simple__or(const simple *x, simple *y) {
-     *y |= *x;
+void simple__or(DIFF_CONST simple *x, simple *y) {
+     mpn__or(x->arr, y->arr);
 }
 
-void simple__xor(const simple *x, simple *y) {
-     *y ^= *x;
+void simple__xor(DIFF_CONST simple *x, simple *y) {
+     mpn__xor(x->arr, y->arr);
 }
 
-
-void simple__and(const simple *x, simple *y) {
-  *y &= *x;
+void simple__and(DIFF_CONST simple *x, simple *y) {
+     mpn__and(x->arr, y->arr);
 }
 
 void simple__not(int n_dim, simple *x) {
-  *x ^= tables__n_max_index[n_dim];
+     mpn__xor(tables__n_max_index[n_dim],x->arr);
 }
 
-
-void disjoin(unsigned long long int arr[], simple *x) {
-     int i;
-     simple ret = 0ull;
+static void disjoin(int n_dim, mp_limb_t arr[][SIMPLE_LIMBS], simple *x) {
+     unsigned int i,bit;
+     mp_limb_t *limb;
+     mp_limb_t ret[SIMPLE_LIMBS];
      
-     for (i = 0; *x != 0ull; ++i) {
-	  if (*x & 1ull) {
-	       ret |= arr[i];
-	       *x ^= 1ull;
+     mpn__zero(ret);
+     limb = x->arr;
+     bit = 0;
+     for (i = 0; i < tables__n_atoms[n_dim]; ++i) {
+	  if (*limb & 1) {
+	       mpn__or(arr[i],ret);
 	  }
-	  //*x = *x / 2ull;
-	  *x >>= 1;
+	  *limb >>= 1;
+	  ++ bit;
+	  if (bit == ULONG_BIT) {
+	       ++limb;
+	       bit = 0;
+	  }
      }
-     *x = ret;
+     mpn__copy(ret,x->arr);
 }
-
 
 void simple__c0(simple *x) {
      if (!simple__is_zero(x)) {
@@ -125,15 +238,15 @@ void simple__c0(simple *x) {
 }
 
 void simple__c1(simple *x) {
-     disjoin(arr_c1,x);
+     disjoin(2,arr_c1,x);
 }
 
 void simple__c2(simple *x) {
-     disjoin(arr_c2,x);
+     disjoin(3,arr_c2,x);
 }
 
 void simple__p(simple *x) {
-     disjoin(arr_p3,x);
+     disjoin(3,arr_p3,x);
 }
 
 /*
@@ -142,60 +255,67 @@ void simple__point(simple *x) {
 */
 
 void simple__r(simple *x) {
-     disjoin(arr_r3,x);
+     disjoin(3,arr_r3,x);
 }
 
 void simple__s(simple *x) {
-     disjoin(arr_s3,x);
+     disjoin(3,arr_s3,x);
 }
 
-//inverse of s (also additive)
 void simple__s_inv(simple *x) {
-     disjoin(arr_s3_inv,x);
+     disjoin(3,arr_s3_inv,x);
+}
+
+/*
+ * produces random simple with bitcount 1
+ * note does not produce 0
+ * */
+void simple__random(simple *x) {
+     int i;
+     simple__zero(x);
+     x->arr[0] |= 1;
+     for (i = (unsigned int)((tables__n_atoms[3]) * ((double) rand()/RAND_MAX)); i--;) {
+	  mpn__double(x->arr);
+     }
+}
+
+void simple__random_reset(simple *x) {
+     int i;
+     mp_limb_t max_val = -1;
+     for (i = 0; i < SIMPLE_LIMBS; ++i) {
+	  x->arr[i] = max_val * ((double) rand()/RAND_MAX);
+     }
+     mpn__and(tables__n_max_index[3],x->arr);
 }
 
 
 /*
- * note does not return 0
- * */
-void simple__random(simple *x) {
-     *x = arr_exp[(int)((tables__n_atoms[3]) * ((double) rand()/RAND_MAX))];
-     //if (*x * 2 >= tables__n_max_index[3]) printf("random: %llu\n",*x);
-     /*
-     static simple s = 0ull;
-     *x = s; 
-     ++s;
-     s = s % (tables__n_max_index3 + 1);
-     *x ^= s;
-     */
-}
-
-void simple__random_reset(simple *x) {
-     *x = ((tables__n_max_index[3] + 1) * ((double) rand()/RAND_MAX));
-     //printf("random: %llu\n",*x);
-}
-
 void simple__next(simple *x) {     
-     static simple s = 0ull;
-     *x = s;
-     ++s;
-     s = s % (tables__n_max_index[3] + 1ull);
-     *x ^= s;
-}
-
-
-int evaluate_at(const simple *x,int j) {
      simple s;
      int i;
+
+     simple__zero(&s);
+     
+
+     *x = s;
+     ++s;
+     s = s % (tables__n_max_index[3] + 1);
+     *x ^= s;
+}
+*/
+
+int evaluate_at(DIFF_CONST mp_limb_t *x,int j) {
+     mp_limb_t s;
      
      s = *x;
      s >>= j;
-     return s & 1ull;
+     return s & 1;
 }
 
-void display_binary(int n_dim, unsigned int tabs,const simple *x) {
-     simple s;
-     unsigned int i;
+
+void display_binary(int n_dim, unsigned int tabs,DIFF_CONST mp_limb_t *x) {
+     mp_limb_t s;
+     unsigned int i,j;
      
      for(i = 0; i < tabs; ++i) printf(" ");
      if (n_dim == 3 && tables__n_atoms[n_dim] == 8) {
@@ -204,36 +324,40 @@ void display_binary(int n_dim, unsigned int tabs,const simple *x) {
 	  printf("%d",evaluate_at(x,6));
 	  printf("%d",evaluate_at(x,1));
 	  printf("%d",evaluate_at(x,7));
-	  //printf("\n");
-	  //for(i = 0; i < tabs+1; ++i) printf(" ");
+	  
+	  
 	  printf("%d",evaluate_at(x,2));
 	  printf("%d",evaluate_at(x,3));
 	  printf("%d",evaluate_at(x,0));  
 	  printf("%d",evaluate_at(x,5));
      } else {
 	  s = *x;
-	  for (i = 0; i < tables__n_atoms[n_dim]; ++i) {
-	       if (s & 1ull) {
+	  for (i = 0, j = 0; i < tables__n_atoms[n_dim]; ++i) {
+	       if (s & 1) {
 		    printf("1");
-		    s ^= 1ull;
+		    s ^= 1;
 	       } else {
 		    printf("0");
 	       }
 	       s >>= 1;
+	       if (i == ULONG_BIT - 1) {
+		 ++j;
+		 s = x[j];
+	       }
 	  }
      }
 }
 
 
-void simple__display(int n_dim, int tabs,const simple *x) {
-     //printf("%d:",*x);
-     display_binary(n_dim, tabs,x);
-}
-
-void plain_display(int n_dim, const simple x) {
-     printf(" ");
-     simple__display(n_dim,0,&x);
-     printf("\n\n");
+void simple__display(int n_dim, int tabs, DIFF_CONST simple *x) {
+     /*
+     int i;
+     for (i = 0; i < tabs; ++i) {
+	  printf(" ");
+     }
+     mpn__display_binary(tables__n_atoms[n_dim],x->arr);     
+      */
+     display_binary(n_dim,tabs,x->arr);
 }
 
 /*
@@ -241,138 +365,112 @@ void plain_display(int n_dim, const simple x) {
  */
 /*
 void simple__describe() {
-     int i;
-     simple pow2;
-     
-     for (i = 0,pow2 = 1; i < simple__n_atoms(3); ++i,pow2 <<= 1) {
-	  if (arr_r3[pow2] == pow2) {
-	       printf("diogonal:\n");
-	       plain_display(3,pow2);
-	       printf("x axis:\n");
-	       plain_display(3,pow2 ^ arr_c2[pow2]);
-	       printf("y axis:\n");
-	       plain_display(3,pow2 ^ arr_r3[arr_c2[pow2]]);
-	       printf("z axis:\n");
-	       plain_display(3,pow2 ^ arr_r3[arr_r3[arr_c2[pow2]]]);
-	  }
-     }
-     for (i = 0,pow2 = 1; i < simple__n_atoms(3); ++i,pow2 <<= 1) {
-	  printf("s(");
-	  simple__display(3,0,&pow2);
-	  printf(") = ");
-	  simple__display(3,0,&arr_s3[pow2]);
-	  printf("\n");
-	  
-	  printf("r(");
-	  simple__display(3,0,&pow2);
-	  printf(") = ");
-	  simple__display(3,0,&arr_r3[pow2]);
-	  printf("\n");
-	  
-	  printf("p(");
-	  simple__display(3,0,&pow2);
-	  printf(") = ");
-	  simple__display(3,0,&arr_p3[pow2]);
-	  printf("\n");
-	  
-	  printf("c(");
-	  simple__display(3,0,&pow2);
-	  printf(") = ");
-	  simple__display(3,0,&arr_c2[pow2]);
-	  printf("\n");
-	  
-	  printf("r(%d) = %d\n",pow2,arr_r[pow2]);
-	  printf("s(%d) = %d\n",pow2,arr_s[pow2]);
-	  printf("p(%d) = %d\n",pow2,arr_p[pow2]);
-	  printf("c(%d) = %d\n",pow2,arr_c0[pow2]);
-	  
-	  printf("\n");
-     }
+     printf("ULONG_BIT: %u\n",ULONG_BIT);
+     printf("max_index: \n");
+     mpn__display_binary(tables__n_atoms[0], tables__n_max_index[0]);printf("\n");
+     mpn__display_binary(tables__n_atoms[1], tables__n_max_index[1]);printf("\n");
+     mpn__display_binary(tables__n_atoms[2], tables__n_max_index[2]);printf("\n");
+     mpn__display_binary(tables__n_atoms[3], tables__n_max_index[3]);printf("\n");
 }
 */
-
-
-unsigned long long int bitcount(unsigned long long int n) {
-     unsigned long long int ret = 0ull;
-     while (n != 0ull) {
-	  if (n & 1ull) {
-	       ++ret;
-	       n ^= 1ull;
-	  }
-	  n >>= 1;
-     }
-     return ret;
-}
-
-
-// taken from Gurmeet Singh Manku at http://www-db.stanford.edu/~manku/bitcount/bitcount.html
-#define TWO(c)     (0x1ull << (c))
-#define MASK(c)    (((unsigned long long int)(-1)) / (TWO(TWO(c)) + 1ull))
-#define COUNT(x,c) ((x) & MASK(c)) + (((x) >> (TWO(c))) & MASK(c))
-     
-int bitcount2(unsigned long long int n)
-{
-     n = COUNT(n, 0) ;
-     n = COUNT(n, 1) ;
-     n = COUNT(n, 2) ;
-     n = COUNT(n, 3) ;
-     n = COUNT(n, 4) ;
-     n = COUNT(n, 5) ;    //for 64-bit integers
-     return n ;
-}
-
-#define MASK_01010101 (((unsigned int)(-1))/3)
-#define MASK_00110011 (((unsigned int)(-1))/5)
-#define MASK_00001111 (((unsigned int)(-1))/17)
-
-int bitcount3 (unsigned int n)
-{
-     //for 32-bits tall
-         n = (n & MASK_01010101) + ((n >> 1) & MASK_01010101) ; 
-         n = (n & MASK_00110011) + ((n >> 2) & MASK_00110011) ; 
-         n = (n & MASK_00001111) + ((n >> 4) & MASK_00001111) ; 
-         return n % 255 ;
-}
-
-unsigned int simple__n_atoms(int n_dim) {
+unsigned long int simple__n_atoms(int n_dim) {
      return tables__n_atoms[n_dim];
 }
 
-void simple__score(int n_dim, const simple *x, score *ret) {
-     ret->n_ones = bitcount(*x);
+void simple__score(int n_dim, DIFF_CONST simple *x, score *ret) {
+     ret->n_ones = mpn__popcount(x->arr);
      ret->n_zeros = tables__n_atoms[n_dim] - ret->n_ones;
-     //printf("x: %d, dim: %d, ones: %d, zeros: %d\n",*x,n_dim,ret->n_ones,ret->n_zeros);
+     
 }
 
 void simple__test() {
-     simple x;
-     simple__succ(&x);
-     simple__r(&x);    
-     simple__r(&x);
-     //simple__r(&x);
-     simple__display(3,0,&x);
-     printf(":%lld\n",x);
-     simple__c2(&x);
-     simple__display(2,0,&x);
-     printf(":%lld\n",x);
      printf("\n");
+}
+
+/************************* table filler **************************************************/
+
+/*
+ * language for 2 register machine one is called reg the other accu.
+ * 0   reg = 0;
+ * 1   reg = 1;
+ * 2   reg *= 2; (lshift in gmp)
+ * .   accu = reg;        (accu += 1)?
+ * -   accu = reg - 1     (monus)
+ * |   accu |= reg;
+ */
+
+mp_limb_t reg[SIMPLE_LIMBS];
+
+void fill_const(char *str,mp_limb_t accu[SIMPLE_LIMBS]) {
+     char *p;
+     
+     for (p = str; *p != '\0'; ++p) {
+	  if (*p == '0') {
+	       mpn__zero(reg);
+	  } else if (*p == '1') {
+	       mpn__binary_one(reg);
+	  } else if (*p == '2') {
+	       mpn__double(reg);
+	  } else if (*p == '-') {
+	       mpn__copy(reg,accu);
+	       mpn__decr(accu,accu);
+	  } else if (*p == '.') {
+	       mpn__copy(reg,accu);
+	  } else if (*p == '|') {
+	       mpn__or(reg,accu);
+	  } else {
+	       printf("Error: unrecognized instruction in string representation of table\n");
+	       exit(1);
+	  }
+     }
+     
+}
+
+void fill(int len, char *str[],mp_limb_t accus[][SIMPLE_LIMBS]) {
+     int i;
+     
+     for (i = 0; i < len; ++i) {
+	  fill_const(str[i],accus[i]);
+     }
+}
+
+void table_filler__parse() {
+     /*check bounds of arrays*/
+     if (tables__n_atoms[3] > ULONG_BIT*SIMPLE_LIMBS) {
+	  printf("Error: SIMPLE_LIMBS is to small for this table\n");
+	  exit(1);
+     } else {
+	  fill(tables__n_atoms[3],str_arr_exp,arr_exp);
+	  fill(4,str_tables__n_max_index,tables__n_max_index);
+	  fill(tables__n_atoms[3],str_arr_s3,arr_s3);
+	  fill(tables__n_atoms[3],str_arr_p3,arr_p3);
+	  fill(tables__n_atoms[3],str_arr_r3,arr_r3);
+	  fill(tables__n_atoms[2],str_arr_s2,arr_s2);
+	  fill(tables__n_atoms[2],str_arr_p2,arr_p2);
+	  fill_const(str_const_rel1,const_rel1);
+	  fill_const(str_const_rel2,const_rel2);
+	  fill_const(str_const_rel3,const_rel3);
+	  fill(tables__n_atoms[3],str_arr_c2,arr_c2);
+	  fill(tables__n_atoms[2],str_arr_c1,arr_c1);
+     }
 }
 
 
 void simple__global_init() {
-     int i,j;
-     // initialize the inverse of the s3 operation, namely s3_inv
-     for (i = 0; i < tables__n_atoms[3];++i)
-	  arr_s3_inv[i] = 0ull;
-     
+     unsigned long int i,j;
+
+     table_filler__parse();
+     /* initialize the inverse of the s3 operation, namely s3_inv */
+     for (i = tables__n_atoms[3];i--;)
+	  mpn__zero(arr_s3_inv[i - 1]);
      for (i = 0; i < tables__n_atoms[3]; ++i) {
-	  
-	  if (arr_s3[i] != 0ull) {
+	  if (!mpn__is_zero(arr_s3[i])) {
 	       for (j = 0; j < tables__n_atoms[3]; ++j) {
-		    if (evaluate_at(&(arr_s3[i]),j)) {
-			 arr_s3_inv[j] |= arr_exp[i];
+		    if (evaluate_at(arr_s3[i],j)) {
+			 mpn__or(arr_exp[i],arr_s3_inv[j]);
 		    }
 	       }
 	  }
-     }
+     }	   
 }
+

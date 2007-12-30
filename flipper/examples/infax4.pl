@@ -1,12 +1,12 @@
 aaa(eq(xx)) &
-aaa(eq(xy) => eq(yx)) &
-aaa((eq(xy) & eq(yz)) => eq(xz)) &
-aaa((dom(x) & eq(xy)) => dom(y)) & %substitution
-aaa((dom(x) & eq(xy)) => dom(y)) & %substitution
+aaa(eq(xy) v -eq(yx)) &
+aaa(eq(xz) v -(eq(xy) & eq(yz))) &
+aaa(dom(y) v -(dom(x) & eq(xy))) & %substitution
+aaa(dom(y) v -(dom(x) & eq(xy))) & %substitution
 aae(dom(z)) &
-aaa((dom(x) & dom(y) & f(xy) & eq(xz)) => f(zy)) & %substitution
-aaa((dom(x) & dom(y) & f(xy) & eq(yz)) => f(xz)) & %substitution
+aaa(f(zy) v -(dom(x) & dom(y) & f(xy) & eq(xz))) & %substitution
+aaa(f(xz) v -(dom(x) & dom(y) & f(xy) & eq(yz))) & %substitution
 aae(dom(x) => (f(xz) & dom(z))) &           %dom is closed under f
-aaa((dom(x) & dom(y) & f(xy) & f(xz)) => eq(yz)) & %f is a function
-aaa((dom(x) & dom(y) & f(xy) & f(zy)) => eq(xz)) & %f is injective
+aaa(eq(yz) v -(dom(x) & dom(y) & f(xy) & f(xz))) & %f is a function
+aaa(eq(xz) v -(dom(x) & dom(y) & f(xy) & f(zy))) & %f is injective
 aea(dom(z) & dom(y) & -f(zy)).

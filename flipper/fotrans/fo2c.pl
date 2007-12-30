@@ -1,5 +1,5 @@
 % One of the parameters in the c-functions beginning with the name init_
-% string describing the connective the first char of which is used as a code
+% is a string describing the connective, the first char of which is used as a code
 % in the resulting c-program. In the case of atomic formulae every other char
 % up to the first 'q' is also a code.
 % the codes are as follows:
@@ -140,20 +140,20 @@ adequate_to_c(Id,v(A,B)) :-
 	
 	nl,write('composed set'), write_id(Id), write(';'),nl,
 	
-	write('composed *init'), write_id(Id), write('(int n_rel_id, const composed* q) {'), nl,
+	write('composed *init'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed* q) {'), nl,
 	write('\treturn init_v(&set'), write_id(Id), write(', "v", init'),
 	write_id([0|Id]), write('(n_rel_id, q), init'),
 	write_id([1|Id]), write('(n_rel_id, q));'), nl,
 	write('}'),nl,
 	
-	write('const composed* F'), write_id(Id), write('(int n_rel_id, const composed * q) {'), nl,
+	write('static DIFF_CONST composed* F'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed * q) {'), nl,
 	
-	write('const composed *x ='),nl,
+	write('DIFF_CONST composed *x ='),nl,
 	write('(intset__member(n_rel_id,set'), write_id([0|Id]), write('.relations) ?'),nl,
 	write(' F'), write_id([0|Id]), write('(n_rel_id, q) :'),nl,
 	write(' global__zero);'),nl,
 	
-	write('const composed *y = (intset__member(n_rel_id,set'), write_id([1|Id]), write('.relations) ?'),nl,
+	write('DIFF_CONST composed *y = (intset__member(n_rel_id,set'), write_id([1|Id]), write('.relations) ?'),nl,
 	write(' F'), write_id([1|Id]), write('(n_rel_id, q) :'),nl,
 	write(' global__zero);'),nl,
 	
@@ -166,12 +166,12 @@ adequate_to_c(Id,-(A)) :-
 	
 	nl,write('composed set'), write_id(Id), write(';'),nl,
 	
-	write('composed *init'), write_id(Id), write('(int n_rel_id, const composed* q) {'), nl,
+	write('composed *init'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed* q) {'), nl,
 	write('\treturn init_neg(&set'), write_id(Id), write(', "-", init'),
 	write_id([0|Id]), write('(n_rel_id, q));'), nl,
 	write('}'),nl,
 	
-	write('const composed* F'), write_id(Id), write('(int n_rel_id, const composed * q) {'), nl,
+	write('static DIFF_CONST composed* F'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed * q) {'), nl,
 	%write('if (!intset__member(n_rel_id,set'), write_id(Id),write('.relations)) return global__zero0;'),nl,
 	write('\treturn neg(&set'), write_id(Id), write(', F'),
 	write_id([0|Id]), write('(n_rel_id, q));'), nl,
@@ -182,12 +182,12 @@ adequate_to_c(Id,ex(A)) :-
 	
 	nl,write('composed set'), write_id(Id), write(';'),nl,
 	
-	write('composed *init'), write_id(Id), write('(int n_rel_id, const composed* q) {'), nl,
+	write('composed *init'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed* q) {'), nl,
 	write('\treturn init_c(&set'), write_id(Id), write(', 0, "c0", init'),
 	write_id([0|Id]), write('(n_rel_id, q));'), nl,
 	write('}'),nl,
 	
-	write('const composed* F'), write_id(Id), write('(int n_rel_id, const composed * q) {'), nl,
+	write('static DIFF_CONST composed* F'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed * q) {'), nl,
 	%write('if (!intset__member(n_rel_id,set'), write_id(Id),write('.relations)) return global__zero0;'),nl,
 	write('\treturn c(&set'), write_id(Id), write(', 0, F'),
 	write_id([0|Id]), write('(n_rel_id, q));'), nl,
@@ -198,12 +198,12 @@ adequate_to_c(Id,ey(A)) :-
 	
 	nl,write('composed set'), write_id(Id), write(';'),nl,
 	
-	write('composed *init'), write_id(Id), write('(int n_rel_id, const composed* q) {'), nl,
+	write('composed *init'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed* q) {'), nl,
 	write('\treturn init_c(&set'), write_id(Id), write(', 1, "c1", init'),
 	write_id([0|Id]), write('(n_rel_id, q));'), nl,
 	write('}'),nl,
 	
-	write('const composed* F'), write_id(Id), write('(int n_rel_id, const composed * q) {'), nl,
+	write('static DIFF_CONST composed* F'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed * q) {'), nl,
 	%write('if (!intset__member(n_rel_id,set'), write_id(Id),write('.relations)) return global__zero0;'),nl,
 	write('\treturn c(&set'), write_id(Id), write(', 1, F'),
 	write_id([0|Id]), write('(n_rel_id, q));'), nl,
@@ -214,12 +214,12 @@ adequate_to_c(Id,ez(A)) :-
 	
 	nl,write('composed set'), write_id(Id), write(';'),nl,
 	
-	write('composed *init'), write_id(Id), write('(int n_rel_id, const composed* q) {'), nl,
+	write('composed *init'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed* q) {'), nl,
 	write('\treturn init_c(&set'), write_id(Id), write(', 2, "c2", init'),
 	write_id([0|Id]), write('(n_rel_id, q));'), nl,
 	write('}'),nl,
 	
-	write('const composed* F'), write_id(Id), write('(int n_rel_id, const composed * q) {'), nl,
+	write('static DIFF_CONST composed* F'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed * q) {'), nl,
 	%write('if (!intset__member(n_rel_id,set'), write_id(Id),write('.relations)) return global__zero0;'),nl,
 	write('\treturn c(&set'), write_id(Id), write(', 2, F'),
 	write_id([0|Id]), write('(n_rel_id, q));'), nl,
@@ -232,30 +232,30 @@ adequate_to_c(Id,r(R,Vars)) :-
 	
 	nl,write('composed set'), write_id(Id), write(';'),nl,
 	
-	write('composed *init'), write_id(Id), write('(int n_rel_id, const composed* q) {'), nl,
+	write('composed *init'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed* q) {'), nl,
 	write('\treturn init_R(&set'), write_id(Id), write(', "'), write(R), write('"'),
 	write(', "r['), write(Action), write(','), write(R), write(']",'),
 	write(RelId), write(','), write(Action), write(');'), nl,
 	write('}'),nl,
 	
-	write('const composed* F'), write_id(Id), write('(int n_rel_id, const composed * q) {'), nl,
+	write('static DIFF_CONST composed* F'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed * q) {'), nl,
 	write('\treturn R(&set'), write_id(Id), write(', '), write(RelId), write(', n_rel_id, '),
 	write(Action), write(');'), nl,
 	write('}'), nl.
 
-adequate_to_c(Id,succ(Vars)) :-
+adequate_to_c(Id,wqo(Vars)) :-
 	action(Vars,Action),
 	
 	nl,write('composed set'), write_id(Id), write(';'),nl,
 	
-	write('composed *init'), write_id(Id), write('(int n_unused, const composed* q) {'), nl,
-	write('\treturn init_succ(&set'), write_id(Id), write(', "'), write('succ'), write('"'),
-	write(', "'), write('succ'), write('['), write(Action), write(']",'),
+	write('composed *init'), write_id(Id), write('(int n_unused, DIFF_CONST composed* q) {'), nl,
+	write('\treturn init_wqo(&set'), write_id(Id), write(', "'), write('wqo'), write('"'),
+	write(', "'), write('wqo'), write('['), write(Action), write(']",'),
 	write(Action), write(');'), nl,
 	write('}'),nl,
 	
-	write('const composed* F'), write_id(Id), write('(int n_unused,const composed * q) {'), nl,
-	write('\treturn succ(&set'), write_id(Id), write(', '),
+	write('static DIFF_CONST composed* F'), write_id(Id), write('(int n_unused,DIFF_CONST composed * q) {'), nl,
+	write('\treturn wqo(&set'), write_id(Id), write(', '),
 	write(Action), write(');'), nl,
 	write('}'), nl.
 
@@ -264,12 +264,12 @@ adequate_to_c(Id,axyz(A)) :-
 	
 	nl,write('composed set'), write_id(Id), write(';'),nl,
 	
-	write('composed *init'), write_id(Id), write('(int n_rel_id, const composed* q) {'), nl,
+	write('composed *init'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed* q) {'), nl,
 	write('\treturn init_axyz(&set'), write_id(Id), write(', "aaa", init'),
 	write_id([0|Id]), write('(n_rel_id, q));'), nl,
 	write('}'),nl,
 	
-	write('const composed* F'), write_id(Id), write('(int n_rel_id, const composed * q) {'), nl,
+	write('static DIFF_CONST composed* F'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed * q) {'), nl,
 	%write('if (!intset__member(n_rel_id,set'), write_id(Id),write('.relations)) return global__zero0;'),nl,
 	write('\treturn axyz(&set'), write_id(Id), write(', F'),
 	write_id([0|Id]), write('(n_rel_id, q));'), nl,
@@ -281,12 +281,12 @@ adequate_to_c(Id,axyez(A)) :-
 	
 	nl,write('composed set'), write_id(Id), write(';'),nl,
 	
-	write('composed *init'), write_id(Id), write('(int n_rel_id, const composed* q) {'), nl,
+	write('composed *init'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed* q) {'), nl,
 	write('\treturn init_axyez(&set'), write_id(Id), write(', "aae", init'),
 	write_id([0|Id]), write('(n_rel_id, q));'), nl,
 	write('}'),nl,
 	
-	write('const composed* F'), write_id(Id), write('(int n_rel_id, const composed * q) {'), nl,
+	write('static DIFF_CONST composed* F'), write_id(Id), write('(int n_rel_id, DIFF_CONST composed * q) {'), nl,
 	write('\treturn axyez(&set'), write_id(Id), write(', F'),
 	write_id([0|Id]), write('(n_rel_id, q));'), nl,
 	write('}'), nl.
@@ -353,7 +353,7 @@ fo_2_adequate(<=>(A,B), C) :-
 	fo_2_adequate(&(=>(A,B),=>(B,A)),C).
 fo_2_adequate(':'(X,R),r(R,X)).
 fo_2_adequate(r(R,X),r(R,X)).
-fo_2_adequate(succ(X),succ(X)) :- !.
+fo_2_adequate(wqo(X),wqo(X)) :- !.
 fo_2_adequate(A,r(R,X)) :-
 	A =.. [R,X].
 fo_2_adequate(A,A) :- 
@@ -365,8 +365,8 @@ main :-
 	read_term(A,[syntax_error(fail)]),
 	formula(A),
 	
-	Sorted = A,
-	%sortit(A,Sorted),
+	%Sorted = A,
+	sortit(A,Sorted),
 	
 	fo_2_adequate(Sorted,B),
 	adequate_to_c([],B),!.
