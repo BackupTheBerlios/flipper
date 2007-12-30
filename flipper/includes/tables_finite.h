@@ -1,3 +1,19 @@
+/***************************************************************************
+ *            tables_finite.h  -  tables for a finite structure
+ *                              -------------------
+ *     copyright            : (C) 2005 by André Rognes
+ *     email                : rognes@users.berlios.de
+ *  ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
 mp_limb_t arr_exp[8][SIMPLE_LIMBS];
 char *str_arr_exp[] = {"1.","12.","122.","1222.","12222.","122222.","1222222.","12222222."};
 unsigned long int tables__n_atoms[] = {1,2, 4, 8};
