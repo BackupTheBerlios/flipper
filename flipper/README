@@ -43,7 +43,7 @@ flipper file.fo
 %to translate .fo files to the TPTP format do;
 fo2tptp < file.fo
 
-where file.fo is a file whose content is of the following form;
+Here file.fo is a file whose content is of the following form;
 
 Sentence.
 
@@ -77,10 +77,11 @@ Relation(yz)
 Relation(zx)
 Relation(zy)
 Relation(zz)
-Relation(xyz) 
+Relation(xxx) 
 .
 .
 .
+Relation(zzz)
 
 where Relation denotes any sequence of 
 letters the first of which is lower case.
@@ -91,7 +92,7 @@ these have to be defined as in the examples below.
 
 EXAMPLES
 
-Here are some examples of formulae that don't have finite models.
+Here are some examples of sentences that don't have finite models.
 The symbol % means that the rest of the line is a comment.
 
 example 1; an irreflexive transitive unbounded relation 
